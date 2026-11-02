@@ -9,7 +9,7 @@ Windows x64 desktop launcher with native tray, local libraries, GitHub releases,
 - 19 Rust checks pass, including state recovery, real inert EXE/CMD/BAT launches, download validation, curated recipes, ZIP traversal/duplicate rejection and launcher rollback/readiness.
 - Native monitor-2 checks pass for tray registration/hide/restore/close/minimize, existing Dual Steam detection, bounded scans, image controls, direct latest demo download, Unicode folder paths, independent version-folder installation and recorded sizes.
 - Native folder dialog placement/cancellation is verified on monitor 2; full folder selection is not automated because Windows focus protection blocks scoped keyboard automation. Custom root persistence and installation are verified separately.
-- Final packaged-executable, installer and authentic public 0.3.0-to-0.4.0 upgrade results are recorded in the release verification report.
+- Final packaged-executable, installer and authentic public 0.3.0-to-0.4.0 upgrade checks passed; details are in VERIFICATION-v0.4.0.md.
 
 ## Boundaries
 

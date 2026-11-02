@@ -1,3 +1,13 @@
+# Current interface — 0.4.0
+
+The shell uses a compact File/Edit/View/Help caption bar, integrated window controls and a vertical navigation rail. The rail stays vertical at narrow desktop widths and becomes icon-only below 650px; it no longer changes to a horizontal row. The Dual Discord palette remains the default, with prior palettes and accents retained.
+
+Project pages use Overview, Downloads and Information tabs. A logo/title/status/action header and four factual fields precede the content. Original screenshots are contained, with thumbnail and previous/next controls. Actions and installation folders are kept near the package state; file kinds use restrained conventional colors. No workspace breadcrumb or decorative status footer remains.
+
+Coucou uses a neutral icon pending permission. Brightness Control uses its official artwork. Transitions are restrained; typography, contrast and control containment are reviewed at multiple widths.
+
+The remaining text below records historical design decisions; current implementation and screenshots take precedence.
+
 # Interface decisions
 
 ## Update: original project imagery

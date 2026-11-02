@@ -35,4 +35,9 @@ Portable ZIP: 68a6e2a8aa4300eaf2eb99d63d18abe21fccc976258b295f925b471bbeb25769
 
 ## Post-publication checks
 
-The authentic v0.3.0-to-v0.4.0 public upgrade and personal-copy replacement are performed after publication. Their results will be recorded in the final delivery report without moving the release tag or replacing release assets.
+- Authentic retained v0.3.0 executable upgraded through the public v0.4.0 GitHub asset: published SHA-256 matched, chosen download folder honored, deliberate corruption rejected, executable replaced, startup readiness acknowledged and a fresh check reported current. Its nonempty library stayed unchanged.
+- Personal portable executable replaced, desktop shortcut created/verified and normal launcher reopened on monitor 2. Existing links/settings/library were preserved. Default application root resolves dynamically under the current user's Windows Programs folder.
+- Public v0.3.0 standalone asset still has SHA-256 d68b98251d48b35a90b1bf0b3afcfda3dcb17d919d901180d0e89c2dc0dcff42. Earlier tags and assets remain retained.
+- Release tag v0.4.0 identifies commit 2b2c03be6c4ba549f24b65d1383aae7600d2ac85. Application/build inputs are identical to tested CI commit 6b69b6a19cf7d4923352fa3680896dca2143de20; the differences are screenshots, documentation and a longer native notice-load test timeout. Post-publication reports are committed afterward without moving the tag or replacing existing assets.
+
+Release: https://github.com/w-rakeeb/wrakeeb-launcher/releases/tag/v0.4.0
