@@ -11,6 +11,7 @@ use std::{
 };
 use tauri::{Manager, State};
 use tauri_plugin_dialog::DialogExt;
+mod packages;
 mod updates;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -33,6 +34,8 @@ struct Preferences {
     theme: String,
     download_directory: Option<String>,
     check_updates_on_start: bool,
+    install_directory: Option<String>,
+    accent: String,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -43,6 +46,8 @@ impl Default for Preferences {
             theme: "discord".into(),
             download_directory: None,
             check_updates_on_start: true,
+            install_directory: None,
+            accent: "default".into(),
         }
     }
 }
@@ -61,6 +66,8 @@ struct Store {
     apps: Vec<LinkedApp>,
     preferences: Preferences,
     activity: Vec<Activity>,
+    #[serde(default)]
+    installations: Vec<packages::Installation>,
 }
 impl Default for Store {
     fn default() -> Self {
@@ -69,6 +76,7 @@ impl Default for Store {
             apps: vec![],
             preferences: Preferences::default(),
             activity: vec![],
+            installations: vec![],
         }
     }
 }
@@ -84,6 +92,7 @@ struct Snapshot {
     missing_ids: Vec<String>,
     data_directory: String,
     download_directory: String,
+    install_directory: String,
 }
 
 fn now() -> u64 {
@@ -157,6 +166,55 @@ fn read_store(file: &Path) -> Result<Store, String> {
     }
     Ok(store)
 }
+fn windows_tool(name: &str) -> Result<PathBuf, String> {
+    Ok(
+        PathBuf::from(std::env::var_os("WINDIR").ok_or("Windows directory unavailable")?)
+            .join("System32")
+            .join(name),
+    )
+}
+fn launchable(path: &Path) -> Result<PathBuf, String> {
+    if path
+        .extension()
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("exe"))
+    {
+        return executable(path);
+    }
+    let text = path.to_string_lossy();
+    if !path.is_absolute()
+        || text.starts_with(r"\\")
+        || text.chars().any(|c| "&|<>^%!\"\r\n".contains(c))
+    {
+        return Err(
+            "Choose a local script whose path does not contain shell control characters.".into(),
+        );
+    }
+    let resolved = path
+        .canonicalize()
+        .map_err(|_| "The selected script is missing or inaccessible")?;
+    let normalized = resolved.to_string_lossy();
+    let result = PathBuf::from(normalized.strip_prefix(r"\\?\").unwrap_or(&normalized));
+    if !result.is_file()
+        || !["cmd", "bat", "ps1"].contains(
+            &result
+                .extension()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_ascii_lowercase()
+                .as_str(),
+        )
+    {
+        return Err("Choose an .exe, .cmd, .bat or .ps1 file.".into());
+    }
+    if result
+        .to_string_lossy()
+        .chars()
+        .any(|c| "&|<>^%!\"\r\n".contains(c))
+    {
+        return Err("This script path contains unsupported shell characters.".into());
+    }
+    Ok(result)
+}
 fn save(file: &Path, store: &Store) -> Result<(), String> {
     let parent = file.parent().ok_or("Invalid library location")?;
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -222,6 +280,9 @@ fn snapshot(library: State<Library>) -> Result<Snapshot, String> {
         download_directory: updates::download_directory(&library)?
             .to_string_lossy()
             .into_owned(),
+        install_directory: packages::install_directory(&library)?
+            .to_string_lossy()
+            .into_owned(),
         data_directory: library
             .file
             .parent()
@@ -236,7 +297,7 @@ fn add(
     path: PathBuf,
     catalog_id: Option<String>,
 ) -> Result<String, String> {
-    let valid = executable(&path)?;
+    let valid = launchable(&path)?;
     let path = valid.to_string_lossy().into_owned();
     mutate(library, |store| {
         if store
@@ -271,8 +332,8 @@ async fn pick_application(app: tauri::AppHandle) -> Result<Option<String>, Strin
         let selected = app
             .dialog()
             .file()
-            .set_title("Add an application to Wrakeeb Launcher")
-            .add_filter("Windows application", &["exe"])
+            .set_title("Add an app or script to Wrakeeb Launcher")
+            .add_filter("Applications and scripts", &["exe", "cmd", "bat", "ps1"])
             .blocking_pick_file();
         let Some(file) = selected else {
             return Ok(None);
@@ -280,7 +341,7 @@ async fn pick_application(app: tauri::AppHandle) -> Result<Option<String>, Strin
         let path = file
             .into_path()
             .map_err(|_| "Choose a local file".to_string())?;
-        let valid = executable(&path)?;
+        let valid = launchable(&path)?;
         let matching_id = ["dual-discord", "stickyn", "codex-presence", "coucou"]
             .iter()
             .find(|id| {
@@ -315,6 +376,40 @@ async fn launch_application(id: String, app: tauri::AppHandle) -> Result<(), Str
     .await
     .map_err(|e| e.to_string())?
 }
+fn launch_command(path: &Path) -> Result<Command, String> {
+    let path = launchable(path)?;
+    let extension = path
+        .extension()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_ascii_lowercase();
+    let mut command = if extension == "ps1" {
+        let mut process = Command::new(windows_tool("WindowsPowerShell/v1.0/powershell.exe")?);
+        process.args(["-NoProfile", "-File"]).arg(&path);
+        process
+    } else if extension == "cmd" || extension == "bat" {
+        let mut process = Command::new(windows_tool("cmd.exe")?);
+        process.args(["/d", "/s", "/c"]);
+        // cmd.exe does not use CRT argument escaping; the validated path is the sole command.
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            process.raw_arg(format!("\"\"{}\"\"", path.display()));
+        }
+        #[cfg(not(windows))]
+        process.arg(&path);
+        process
+    } else {
+        Command::new(&path)
+    };
+    command.current_dir(path.parent().ok_or("Invalid application directory")?);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x00000400);
+    }
+    Ok(command)
+}
 fn launch_linked(library: &Library, id: &str) -> Result<(), String> {
     let linked = library
         .store
@@ -325,14 +420,7 @@ fn launch_linked(library: &Library, id: &str) -> Result<(), String> {
         .find(|item| item.id == id)
         .cloned()
         .ok_or("Application is no longer linked")?;
-    let path = executable(Path::new(&linked.path))?;
-    let mut command = Command::new(&path);
-    command.current_dir(path.parent().ok_or("Invalid application directory")?);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x00000400);
-    }
+    let mut command = launch_command(Path::new(&linked.path))?;
     let mut child = command
         .spawn()
         .map_err(|e| format!("Windows could not open this application: {e}"))?;
@@ -376,10 +464,15 @@ fn remove_application(id: String, library: State<Library>) -> Result<(), String>
 }
 #[tauri::command]
 fn save_preferences(preferences: Preferences, library: State<Library>) -> Result<(), String> {
-    if !["discord", "wrakeeb"].contains(&preferences.theme.as_str()) {
+    if !["discord", "wrakeeb", "slate", "light"].contains(&preferences.theme.as_str())
+        || !["default", "blue", "teal", "red", "amber"].contains(&preferences.accent.as_str())
+    {
         return Err("Choose a supported theme.".into());
     }
     if let Some(path) = &preferences.download_directory {
+        local_directory(Path::new(path))?;
+    }
+    if let Some(path) = &preferences.install_directory {
         local_directory(Path::new(path))?;
     }
     mutate(&library, |store| {
@@ -398,7 +491,7 @@ fn reveal_application(id: String, library: State<Library>) -> Result<(), String>
         .find(|item| item.id == id)
         .cloned()
         .ok_or("Application is no longer linked")?;
-    let path = executable(Path::new(&linked.path))?;
+    let path = launchable(Path::new(&linked.path))?;
     let explorer =
         PathBuf::from(std::env::var_os("WINDIR").ok_or("Windows directory unavailable")?)
             .join("explorer.exe");
@@ -435,6 +528,7 @@ fn main() {
                 .join("data");
             let file = directory.join("library.json");
             app.manage(updates::Updates::new(&directory));
+            app.manage(packages::Packages::new(&directory));
             // Preserve unreadable data: commands return this startup error instead of overwriting it.
             let initial = read_store(&file);
             match initial {
@@ -465,6 +559,14 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            packages::get_project_release,
+            packages::get_package_status,
+            packages::download_project_asset,
+            packages::install_project_package,
+            packages::cancel_package_download,
+            packages::choose_install_directory,
+            packages::open_project_page,
+            packages::create_desktop_shortcut,
             get_snapshot,
             link_catalog_app,
             pick_application,
@@ -719,6 +821,39 @@ mod tests {
             }
             std::thread::sleep(std::time::Duration::from_millis(20));
         }
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn command_scripts_run_from_paths_with_spaces_without_a_visible_console() {
+        use std::os::windows::process::CommandExt;
+        let root = scratch();
+        let folder = root.join("folder with spaces");
+        fs::create_dir(&folder).unwrap();
+        for extension in ["cmd", "bat"] {
+            let path = folder.join(format!("test script.{extension}"));
+            fs::write(
+                &path,
+                format!("@echo off\r\necho worked>launched-{extension}.txt\r\n"),
+            )
+            .unwrap();
+            let mut command = launch_command(&path).unwrap();
+            command.creation_flags(0x08000000);
+            assert!(command.status().unwrap().success());
+            assert_eq!(
+                fs::read_to_string(folder.join(format!("launched-{extension}.txt")))
+                    .unwrap()
+                    .trim(),
+                "worked"
+            );
+        }
+        let ps = folder.join("test script.ps1");
+        fs::write(&ps, "Write-Output 'sample'").unwrap();
+        let powershell = launch_command(&ps).unwrap();
+        assert!(powershell.get_args().any(|a| a == "-File"));
+        assert!(!powershell.get_args().any(|a| a == "-ExecutionPolicy"));
+        let rejected = folder.join("not%allowed.cmd");
+        fs::write(&rejected, "@echo off").unwrap();
+        assert!(launch_command(&rejected).is_err());
         fs::remove_dir_all(root).unwrap();
     }
 }

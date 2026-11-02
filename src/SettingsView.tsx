@@ -19,6 +19,8 @@ export function SettingsView({
   openFolder,
   openUpdates,
   help,
+  chooseInstallDirectory,
+  createShortcut,
 }: {
   snapshot: Snapshot;
   busy: boolean;
@@ -28,15 +30,41 @@ export function SettingsView({
   openFolder: () => void;
   openUpdates: () => void;
   help: () => void;
+  chooseInstallDirectory: () => void;
+  createShortcut: () => void;
 }) {
   const [tab, setTab] = useState("appearance");
   const prefs = snapshot.store.preferences;
   return (
     <div className="settings-content">
       <div
-        className="settings-tabs"
+        className="tabs tabs-box settings-tabs"
         role="tablist"
         aria-label="Settings sections"
+        onKeyDown={(event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+            return;
+          event.preventDefault();
+          const tabs = Array.from(
+            event.currentTarget.querySelectorAll<HTMLButtonElement>(
+              '[role="tab"]',
+            ),
+          );
+          const current = tabs.indexOf(
+            document.activeElement as HTMLButtonElement,
+          );
+          const next =
+            event.key === "Home"
+              ? 0
+              : event.key === "End"
+                ? tabs.length - 1
+                : (current +
+                    (event.key === "ArrowRight" ? 1 : -1) +
+                    tabs.length) %
+                  tabs.length;
+          tabs[next]?.focus();
+          tabs[next]?.click();
+        }}
       >
         {[
           { id: "appearance", label: "Appearance", icon: Palette },
@@ -46,6 +74,8 @@ export function SettingsView({
           <button
             key={item.id}
             role="tab"
+            tabIndex={tab === item.id ? 0 : -1}
+            className={`tab ${tab === item.id ? "tab-active" : ""}`}
             aria-selected={tab === item.id}
             id={`settings-tab-${item.id}`}
             aria-controls={`settings-panel-${item.id}`}
@@ -66,7 +96,7 @@ export function SettingsView({
             <section className="settings-section">
               <div>
                 <h2>Theme</h2>
-                <p>Dual Discord's palette, adapted for your app library.</p>
+                <p>Choose the interface palette and accent color.</p>
               </div>
               <div className="settings-panel">
                 <label className="theme-select-label" htmlFor="theme-choice">
@@ -85,6 +115,28 @@ export function SettingsView({
                 >
                   <option value="discord">Dual Discord · Default</option>
                   <option value="wrakeeb">Original charcoal</option>
+                  <option value="slate">Slate</option>
+                  <option value="light">Corporate light</option>
+                </select>
+                <label className="theme-select-label" htmlFor="accent-choice">
+                  Accent color
+                </label>
+                <select
+                  id="accent-choice"
+                  className="select theme-select"
+                  value={prefs.accent ?? "default"}
+                  disabled={busy || !desktop}
+                  onChange={(event) =>
+                    change({
+                      accent: event.target.value as Preferences["accent"],
+                    })
+                  }
+                >
+                  <option value="default">Theme default</option>
+                  <option value="blue">Blue</option>
+                  <option value="teal">Teal</option>
+                  <option value="red">Red</option>
+                  <option value="amber">Amber</option>
                 </select>
                 <div className="theme-swatches" aria-hidden="true">
                   <i />
@@ -168,6 +220,33 @@ export function SettingsView({
                 </button>
               </div>
             </section>
+            <section className="settings-section">
+              <div>
+                <h2>Application installations</h2>
+                <p>
+                  Separate application folders let programs run independently.
+                </p>
+              </div>
+              <div className="settings-panel data-panel">
+                <strong>Install new applications to</strong>
+                <p className="file-path install-location">
+                  {snapshot.installDirectory ??
+                    "Your local Windows application folder"}
+                </p>
+                <button
+                  className="btn"
+                  disabled={busy || !desktop}
+                  onClick={chooseInstallDirectory}
+                >
+                  <FolderOpen size={16} />
+                  Choose installation folder
+                </button>
+                <p>
+                  Applies to future installations. Existing versions and their
+                  data are not moved or deleted.
+                </p>
+              </div>
+            </section>
           </>
         ) : (
           <>
@@ -204,6 +283,25 @@ export function SettingsView({
                 <p>
                   App links, favorites and preferences are stored here. A
                   previous-state backup is kept when the library changes.
+                </p>
+              </div>
+            </section>
+            <section className="settings-section">
+              <div>
+                <h2>Desktop access</h2>
+                <p>Open the launcher from your Windows desktop.</p>
+              </div>
+              <div className="settings-panel data-panel">
+                <button
+                  className="btn"
+                  disabled={busy || !desktop}
+                  onClick={createShortcut}
+                >
+                  Create desktop shortcut
+                </button>
+                <p>
+                  Creates a shortcut for the current Windows user. No startup
+                  task is added.
                 </p>
               </div>
             </section>

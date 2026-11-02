@@ -11,7 +11,7 @@ test("browser preview: discover, filter, details, help and honest downloads", as
     page.getByRole("heading", { name: "Your library", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Discover", exact: true }).click();
-  await expect(page.locator(".app-item")).toHaveCount(5);
+  await expect(page.locator(".app-item")).toHaveCount(10);
   await page.getByRole("button", { name: "Productivity", exact: true }).click();
   await expect(page.locator(".app-item")).toHaveCount(2);
   await page.getByRole("button", { name: "All apps", exact: false }).click();
@@ -25,16 +25,12 @@ test("browser preview: discover, filter, details, help and honest downloads", as
   await expect(
     page.getByRole("heading", { name: "StickyN", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("Not published", { exact: true })).toBeVisible();
-  await page
-    .getByRole("button", { name: "Choose executable", exact: true })
-    .click();
-  await expect(page.getByRole("alert")).toContainText(
-    "Open the desktop application",
-  );
+  await expect(page.getByText("GitHub Releases", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "View downloads", exact: true })).toBeVisible();
+  await expect(page.getByText("Open the desktop application to load live GitHub release details.")).toBeVisible();
   await page.getByRole("button", { name: "Downloads", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "No downloads yet" }),
+    page.getByRole("heading", { name: "No package transfers" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "About & help" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -48,7 +44,7 @@ test("original project images load and the image viewer keeps app details open",
 }) => {
   await page.goto("/#discover");
   const cards = page.locator(".app-item");
-  await expect(cards).toHaveCount(5);
+  await expect(cards).toHaveCount(10);
   for (const card of await cards.all()) {
     await card.scrollIntoViewIfNeeded();
     for (const image of await card.locator("img").all()) {
@@ -60,7 +56,7 @@ test("original project images load and the image viewer keeps app details open",
         )
         .toBe(true);
     }
-    await expect(card.locator(".project-brand-cover .project-logo")).toHaveCount(1);
+    await expect(card.locator(".project-brand-cover")).toHaveCount(1);
   }
   await page.getByRole("button", { name: "StickyN", exact: true }).click();
   await expect(
@@ -69,7 +65,7 @@ test("original project images load and the image viewer keeps app details open",
   await page
     .getByRole("button", { name: "Show Settings · Native 0.16.0", exact: true })
     .click();
-  await expect(page.locator(".gallery-caption")).toContainText("2 / 2");
+  await expect(page.locator(".gallery-caption")).toContainText("2 / 4");
   await page
     .getByRole("button", {
       name: "Enlarge StickyN image: Settings · Native 0.16.0",
@@ -95,7 +91,7 @@ test("original project images load and the image viewer keeps app details open",
   await expect(
     page.getByRole("heading", { name: "StickyN", exact: true }),
   ).toBeVisible();
-  await expect(page.locator(".gallery-caption")).toContainText("2 / 2");
+  await expect(page.locator(".gallery-caption")).toContainText("2 / 4");
 });
 
 test("desktop bridge: linked app favorites, launch errors, removal, settings and persistence", async ({
@@ -159,7 +155,7 @@ test("desktop bridge: linked app favorites, launch errors, removal, settings and
   await expect(
     page.getByRole("button", { name: "Unfavorite StickyN", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Open", exact: true }).click();
+  await page.getByRole("button", { name: "Launch", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("file is missing");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Color scheme").selectOption("wrakeeb");
@@ -182,7 +178,7 @@ test("desktop bridge: linked app favorites, launch errors, removal, settings and
     .getByRole("button", { name: "Remove from library", exact: true })
     .click();
   await expect(
-    page.getByText("0 linked applications", { exact: true }),
+    page.getByText("0 in library", { exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("status")).toContainText(
     "Application files were kept",
@@ -194,7 +190,7 @@ for (const width of [1440, 900, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await page.getByRole("button", { name: "Discover", exact: true }).click();
-    await expect(page.locator(".app-item")).toHaveCount(5);
+    await expect(page.locator(".app-item")).toHaveCount(10);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > innerWidth,
     );

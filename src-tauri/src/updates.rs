@@ -128,7 +128,7 @@ fn trusted_host(host: &str) -> bool {
     ]
     .contains(&host)
 }
-fn client() -> Result<Client, String> {
+pub(crate) fn client() -> Result<Client, String> {
     Client::builder()
         .user_agent(format!("Wrakeeb-Launcher/{}", env!("CARGO_PKG_VERSION")))
         .connect_timeout(Duration::from_secs(12))
@@ -398,7 +398,7 @@ struct Ready {
 fn valid_target_name(path: &Path) -> bool {
     matches!(
         path.file_name().and_then(|s| s.to_str()),
-        Some("Wrakeeb Launcher.exe" | "Wrakeeb-Launcher-Windows-x64.exe")
+        Some("Wrakeeb Launcher.exe" | "Wrakeeb-Launcher-Windows-x64.exe" | "wrakeeb-launcher.exe")
     )
 }
 #[tauri::command]

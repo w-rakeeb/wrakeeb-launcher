@@ -63,3 +63,9 @@ Still to validate on real hardware: Windows high-contrast mode, Narrator, touch,
 ## 0.2.0 design update
 
 The user's Dual Discord palette replaces the earlier default; original charcoal remains selectable. A single integrated title bar contains native controls. Cards now present original-logo/name covers, while screenshots remain in details. Settings has Appearance/Downloads/General tabs. Updates presents versions, check time, release notes, explicit download/install phases and a visible folder destination. Downloads now shows real launcher-package progress/cancellation. See LAUNCHER-REFERENCES.md for researched patterns. The newest inspection has no failures and only a 390px small-text warning, below the native minimum.
+
+## 0.3.0 review
+
+The screen's question is now operational: what can I download, install and launch? Original app identities carry the collection; each detail screen pairs real screenshots with an accurate description and a release-file workspace. Clear phases and explicit actions replace simulated/decorative states. Card status distinguishes installed packages from external links. Global Add application is secondary to the active package action. Navigation stays quiet, borders group actual settings, and new light/slate palettes use semantic colors.
+
+The accepted Dual Discord/Segoe UI identity was retained rather than drawing a new direction. Additional screenshots are original project captures or the actual installed demo. Inspect at native-relevant widths: zero failures/warnings. Browser checks also cover 390px, below the native minimum. Visible native tests and screenshots use the second monitor.

@@ -103,5 +103,82 @@
     "source": "D:\\Codex\\PulseMute Project\\Public Release\\Github Release\\PulseMute\\Screenshots\\settings-general.png",
     "caption": "General settings \u2014 original release screenshot",
     "sha256": "d31e2af7d9ad775e061996f16cd273c0b4c977cd3763e50fbed721bded269e3e"
+  },
+  {
+    "app": "codex-presence",
+    "file": "src/assets/projects/codex-presence/layout.png",
+    "source": "D:\\Codex\\Codex Discord Rich Presence\\GitHub\\docs\\screenshots\\current\\Layout.png",
+    "caption": "layout",
+    "sha256": "bf219a75868e3f4ca01468c85f8ae39b5e967801eba553577c3219fbff828995"
+  },
+  {
+    "app": "codex-presence",
+    "file": "src/assets/projects/codex-presence/privacy.png",
+    "source": "D:\\Codex\\Codex Discord Rich Presence\\GitHub\\docs\\screenshots\\current\\Privacy.png",
+    "caption": "privacy",
+    "sha256": "e21df1980d09fd362afb09e4893e1ec930660aeb93cd478a7a1ee37a94b09ba1"
+  },
+  {
+    "app": "dual-discord",
+    "file": "src/assets/projects/dual-discord/files.png",
+    "source": "D:\\Codex\\Dual Discord\\Reusable Kits\\Dual Discord Theme Design\\Reference\\Screenshots\\Dark-100-wide-Files.png",
+    "caption": "files",
+    "sha256": "ff1b646df73491c0c6e5bf7d432107dfbcf284ffd1cc9680317633f5c5be9fcc"
+  },
+  {
+    "app": "dual-discord",
+    "file": "src/assets/projects/dual-discord/updates.png",
+    "source": "D:\\Codex\\Dual Discord\\Reusable Kits\\Dual Discord Theme Design\\Reference\\Screenshots\\Dark-100-wide-Settings-Updates.png",
+    "caption": "updates",
+    "sha256": "0633423837894b0d3a03ef2f68b11cca943faa2d3e372dd367a34a9efd808abd"
+  },
+  {
+    "app": "dual-steam",
+    "file": "src/assets/projects/dual-steam/logo.png",
+    "source": "D:\\Codex\\Dual Steam\\Assets\\dual-steam.png",
+    "caption": "logo",
+    "sha256": "cf54c0460b56c85df7fab413d24d1a68ead2fd7d4ab536f5d910d07b85ce924e"
+  },
+  {
+    "app": "dual-steam",
+    "file": "src/assets/projects/dual-steam/profiles.png",
+    "source": "D:\\Codex\\Dual Steam\\Public Source\\docs\\screenshots\\profiles.png",
+    "caption": "profiles",
+    "sha256": "5b15006b6cc72a654d1f95d6770a3106e9407c983e73ff0ff487b880596bd450"
+  },
+  {
+    "app": "dual-steam",
+    "file": "src/assets/projects/dual-steam/settings-general.png",
+    "source": "D:\\Codex\\Dual Steam\\Public Source\\docs\\screenshots\\settings-general.png",
+    "caption": "settings-general",
+    "sha256": "a3c3c76fbf32327867b57ee6380abc4c179b199bd4b75478bd3a166b08313204"
+  },
+  {
+    "app": "dual-steam",
+    "file": "src/assets/projects/dual-steam/sharing.png",
+    "source": "D:\\Codex\\Dual Steam\\Public Source\\docs\\screenshots\\sharing.png",
+    "caption": "sharing",
+    "sha256": "f44a5f1b21e97c7c3b27cce8629604f90db0317788c09cba8ce2521278166129"
+  },
+  {
+    "app": "launcher-demo",
+    "file": "src/assets/projects/launcher-demo/installed.png",
+    "source": "Live client-area capture on monitor 2 of the independently installed Launcher Demo 1.0.0; source examples/LauncherDemo/Program.cs",
+    "caption": "installed",
+    "sha256": "6d90520c91868e591904c96dda070c03f98732b29aca50c6b680afdb489b0d72"
+  },
+  {
+    "app": "stickyn",
+    "file": "src/assets/projects/stickyn/inspector.png",
+    "source": "D:\\Codex\\Sticky Note\\Documentation\\Native-0.16.0\\Evidence\\Large-inspector.png",
+    "caption": "inspector",
+    "sha256": "796dd585a36333f913d3f24e46ab1cfd8aa901face0b282ac797f0a02b59f7fd"
+  },
+  {
+    "app": "stickyn",
+    "file": "src/assets/projects/stickyn/tools.png",
+    "source": "D:\\Codex\\Sticky Note\\Documentation\\Native-0.16.0\\Evidence\\Note-tools.png",
+    "caption": "tools",
+    "sha256": "d4cefc11f0ecd83123242b79cc8555b4b3bbeda8d4d9ce71620ac4e331891326"
   }
 ]

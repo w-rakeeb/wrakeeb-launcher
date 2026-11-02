@@ -38,6 +38,8 @@ import { UpdateView, bytes } from "./UpdateView";
 import { WindowControls } from "./WindowControls";
 import { APP_VERSION, useLauncherUpdates } from "./useLauncherUpdates";
 import brandLogo from "./assets/brand/wrakeeb.png";
+import { usePackages } from "./usePackages";
+import { ProjectReleasePanel, PackageOperation } from "./ProjectRelease";
 
 const navigation: { id: Page; label: string; icon: typeof Library }[] = [
   { id: "library", label: "Library", icon: Library },
@@ -47,15 +49,15 @@ const navigation: { id: Page; label: string; icon: typeof Library }[] = [
   { id: "activity", label: "Activity", icon: ActivityIcon },
 ];
 const headings: Record<Page, [string, string]> = {
-  library: ["Your library", "A familiar place for your everyday tools."],
+  library: ["Your library", "Installed applications, scripts and local tools."],
   discover: [
-    "Made for your desktop.",
-    "A collection of small tools with a purpose.",
+    "Discover",
+    "Applications, scripts and utilities published by Wrakeeb.",
   ],
-  downloads: ["Downloads", "New apps and updates will arrive here."],
+  downloads: ["Downloads", "Package transfers, verification and installation."],
   updates: ["Launcher updates", "The latest stable release, on your terms."],
   activity: ["Activity", "The latest from your local library."],
-  settings: ["Settings", "Make this space work for you."],
+  settings: ["Settings", "Appearance, storage and launcher preferences."],
 };
 function readPage(): Page {
   try {
@@ -88,7 +90,24 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.theme =
       snapshot?.store.preferences.theme ?? "discord";
-  }, [snapshot?.store.preferences.theme]);
+    const accent = snapshot?.store.preferences.accent ?? "default";
+    const colors: Record<string, string> = {
+      blue: "#4055d6",
+      teal: "#087f72",
+      red: "#b93445",
+      amber: "#946000",
+    };
+    for (const token of ["--color-primary", "--color-accent"]) {
+      if (colors[accent])
+        document.documentElement.style.setProperty(token, colors[accent]);
+      else document.documentElement.style.removeProperty(token);
+    }
+    for (const token of ["--color-primary-content", "--color-accent-content"]) {
+      if (colors[accent])
+        document.documentElement.style.setProperty(token, "#ffffff");
+      else document.documentElement.style.removeProperty(token);
+    }
+  }, [snapshot?.store.preferences.theme, snapshot?.store.preferences.accent]);
   const [page, setPage] = useState<Page>(readPage);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All apps");
@@ -118,6 +137,7 @@ export function App() {
     setLoadError(undefined);
     return data;
   }, []);
+  const packages = usePackages(refresh);
   useEffect(() => {
     refresh()
       .then((data) => {
@@ -198,6 +218,15 @@ export function App() {
   }
   function link(app: ViewApp) {
     if (!app.available) {
+      if (app.repository) {
+        setDetailId(app.id);
+        requestAnimationFrame(() =>
+          document
+            .getElementById("release-files")
+            ?.scrollIntoView({ behavior: "auto", block: "start" }),
+        );
+        return;
+      }
       void addLocal();
       return;
     }
@@ -398,29 +427,51 @@ export function App() {
                       ))}
                     </ul>
                   </section>
+                  {detail.repository && (
+                    <ProjectReleasePanel
+                      key={detail.id}
+                      app={detail}
+                      installation={snapshot.store.installations?.find(
+                        (i) => i.catalogId === detail.id,
+                      )}
+                      packages={packages}
+                      openFolder={() =>
+                        void perform("download-folder", () =>
+                          command("open_download_directory"),
+                        )
+                      }
+                      launch={() => launch(detail)}
+                      installDirectory={snapshot.installDirectory}
+                    />
+                  )}
                 </div>
                 <aside className="detail-info">
-                  <h2>Application information</h2>
+                  <h2>Project information</h2>
                   <dl>
                     <div>
                       <dt>Platform</dt>
-                      <dd>Windows</dd>
+                      <dd>Windows 10 / 11</dd>
                     </div>
                     <div>
-                      <dt>Source</dt>
+                      <dt>Type</dt>
+                      <dd>{detail.kind ?? "Application"}</dd>
+                    </div>
+                    <div>
+                      <dt>Distribution</dt>
                       <dd>
-                        {detail.linked
-                          ? "Local installation"
-                          : "Project collection"}
+                        {detail.repository ? "GitHub Releases" : "Local file"}
                       </dd>
                     </div>
                     <div>
-                      <dt>Downloads</dt>
-                      <dd>Not published</dd>
-                    </div>
-                    <div>
-                      <dt>Version</dt>
-                      <dd>Not verified</dd>
+                      <dt>Installed version</dt>
+                      <dd>
+                        {snapshot.store.installations?.find(
+                          (i) => i.catalogId === detail.id,
+                        )?.version ??
+                          (detail.linked
+                            ? "Externally managed"
+                            : "Not installed")}
+                      </dd>
                     </div>
                   </dl>
                   {detail.linked ? (
@@ -474,7 +525,7 @@ export function App() {
                     <p className="aside-note">
                       {detail.available
                         ? "An existing installation was found on this computer. Add it to your library to get started."
-                        : "Already have this app? Use Choose executable to link your installed copy."}
+                        : "Choose a release file below to download. You can also link an existing app or script with Add application."}
                     </p>
                   )}
                   <div className="preserve-note">
@@ -532,6 +583,8 @@ export function App() {
                               "Utilities",
                               "Productivity",
                               "Communication",
+                              "Scripts",
+                              "Demos",
                             ]
                         ).map((item) => (
                           <button
@@ -551,6 +604,7 @@ export function App() {
                         <label className="sort-control">
                           <span className="sr-only">Sort applications</span>
                           <select
+                            className="select select-sm"
                             value={sort}
                             onChange={(event) => setSort(event.target.value)}
                           >
@@ -582,14 +636,12 @@ export function App() {
                     <>
                       <div className="first-run">
                         <div className="first-run-copy">
-                          <span className="quiet-label">
-                            A place for your tools
-                          </span>
-                          <h2>Your collection starts here.</h2>
+                          <span className="quiet-label">Getting started</span>
+                          <h2>No applications installed yet</h2>
                           <p>
-                            Add an application you already use, or explore the
-                            Wrakeeb collection. Everything stays where you
-                            installed it.
+                            Install a published package from Discover, or add an
+                            existing application or script. Programs installed
+                            through the launcher can also run independently.
                           </p>
                           <button
                             className="btn btn-primary"
@@ -606,21 +658,26 @@ export function App() {
                             Explore the collection <ArrowRight size={14} />
                           </button>
                         </div>
-                        <div className="first-run-object" aria-hidden="true">
-                          <div className="object-window">
-                            <div className="object-title">
-                              Your desktop, collected.
-                            </div>
-                            <div className="object-row">
-                              <span />
-                              <span />
-                              <span />
-                            </div>
-                            <div className="object-line" />
-                            <div className="object-caption">
-                              A home for the little things.
-                            </div>
-                          </div>
+                        <div className="first-run-guide">
+                          <h3>Install your first package</h3>
+                          <ol>
+                            <li>Open Discover and select Launcher Demo.</li>
+                            <li>Download its verified GitHub release.</li>
+                            <li>Install the package, then launch it.</li>
+                          </ol>
+                          <p>
+                            You can also add an existing .exe, .cmd, .bat or
+                            .ps1 file.
+                          </p>
+                          <button
+                            className="btn btn-sm"
+                            onClick={() => {
+                              setPage("discover");
+                              setDetailId("launcher-demo");
+                            }}
+                          >
+                            Open Launcher Demo <ArrowRight size={14} />
+                          </button>
                         </div>
                       </div>
                       {detected.length ? (
@@ -721,7 +778,11 @@ export function App() {
                                 {app.missing
                                   ? "File not found"
                                   : app.linked
-                                    ? "Linked application"
+                                    ? app.installed
+                                      ? "Installed"
+                                      : app.kind === "Script"
+                                        ? "Linked script"
+                                        : "Linked application"
                                     : app.available
                                       ? "On this computer"
                                       : app.category}
@@ -765,14 +826,33 @@ export function App() {
                     <div className="catalog-footnote">
                       <ShieldCheck size={16} />
                       <p>
-                        This is your project collection. Public downloads will
-                        appear after each release is packaged and verified.
+                        Release files are loaded directly from each project's
+                        GitHub repository. Availability and requirements vary by
+                        project.
                       </p>
                     </div>
                   )}
                 </>
               ) : page === "downloads" ? (
                 <div className="downloads-layout">
+                  <PackageOperation
+                    packages={packages}
+                    openFolder={() =>
+                      void perform("download-folder", () =>
+                        command("open_download_directory"),
+                      )
+                    }
+                    launch={
+                      linked.find((a) => a.id === packages.status.projectId)
+                        ? () =>
+                            launch(
+                              linked.find(
+                                (a) => a.id === packages.status.projectId,
+                              )!,
+                            )
+                        : undefined
+                    }
+                  />
                   <section className="downloads-empty">
                     <div className="empty-symbol">
                       <ArrowDownToLine size={29} strokeWidth={1.4} />
@@ -807,7 +887,7 @@ export function App() {
                       <>
                         <p>
                           {updates.status.downloadPath ??
-                            "Launcher release packages and future app downloads are kept here. Your existing apps are ready to link and open."}
+                            "Launcher update packages appear here. Project downloads and installation status are shown above."}
                         </p>
                         <button
                           className="btn"
@@ -843,8 +923,9 @@ export function App() {
                         preferences.
                       </p>
                       <p>
-                        Individual app installation will be added as their
-                        release packages become available.
+                        Project files are downloaded from GitHub. Approved
+                        portable packages can be installed in a separate folder;
+                        other files remain direct downloads.
                       </p>
                     </div>
                   </section>
@@ -918,6 +999,20 @@ export function App() {
                   }
                   openUpdates={() => navigate("updates")}
                   help={() => setHelp(true)}
+                  chooseInstallDirectory={() =>
+                    void perform(
+                      "install-folder",
+                      () => command("choose_install_directory"),
+                      "Application folder updated. Existing installations stay in place.",
+                    )
+                  }
+                  createShortcut={() =>
+                    void perform(
+                      "desktop-shortcut",
+                      () => command("create_desktop_shortcut"),
+                      "Desktop shortcut created.",
+                    )
+                  }
                 />
               )}
             </>
@@ -928,10 +1023,7 @@ export function App() {
             <span className="status-dot" />
             {desktop ? "Local library" : "Preview mode"}
           </span>
-          <span>
-            {linked.length} linked{" "}
-            {linked.length === 1 ? "application" : "applications"}
-          </span>
+          <span>{linked.length} in library</span>
           <span className="footer-right">Made by Wrakeeb</span>
         </footer>
       </div>
@@ -995,12 +1087,12 @@ export function App() {
       >
         <div className="modal-box">
           <h2 id="help-title">Wrakeeb Launcher</h2>
-          <p>A home for the tools you use. Version {APP_VERSION}.</p>
+          <p>Applications, scripts and utilities. Version {APP_VERSION}.</p>
           <h3>Getting started</h3>
           <p>
-            Use Add application to choose a Windows .exe file, or add a detected
-            app from your library. Select an app name to see its details,
-            favorite it, or open its folder.
+            Open Discover for GitHub releases, or use Add application to link an
+            .exe, .cmd, .bat or .ps1 file. Select a project for screenshots,
+            requirements, release files and installation controls.
           </p>
           <h3>Your apps stay yours</h3>
           <p>
@@ -1008,11 +1100,11 @@ export function App() {
             files. Launching opens the program you selected. Only add
             executables you trust.
           </p>
-          <h3>What's next</h3>
+          <h3>Downloads and installation</h3>
           <p>
-            Launcher releases can be checked, downloaded and verified in
-            Updates. Individual application installation is being developed
-            separately.
+            Project packages are downloaded, verified and installed separately.
+            Installed apps run independently. Launcher updates are managed in
+            Updates. Scripts run only when you choose Run script.
           </p>
           <div className="modal-action">
             <form method="dialog">
@@ -1045,7 +1137,8 @@ function Action({
       disabled={busy || app.missing}
       onClick={() => launch(app)}
     >
-      Open <ArrowRight size={14} aria-hidden="true" />
+      {app.kind === "Script" ? "Run script" : "Launch"}{" "}
+      <ArrowRight size={14} aria-hidden="true" />
     </button>
   ) : (
     <button
@@ -1061,7 +1154,7 @@ function Action({
       ) : (
         <>
           <Link2 size={14} aria-hidden="true" />
-          Choose executable
+          {app.repository ? "View downloads" : "Choose file"}
         </>
       )}
     </button>

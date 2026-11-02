@@ -1,3 +1,15 @@
+import demoInstalled from "./assets/projects/launcher-demo/installed.png";
+import steamLogo from "./assets/projects/dual-steam/logo.png";
+import steamProfiles from "./assets/projects/dual-steam/profiles.png";
+import steamSettings from "./assets/projects/dual-steam/settings-general.png";
+import steamSharing from "./assets/projects/dual-steam/sharing.png";
+import dualFiles from "./assets/projects/dual-discord/files.png";
+import dualUpdates from "./assets/projects/dual-discord/updates.png";
+import stickyInspector from "./assets/projects/stickyn/inspector.png";
+import stickyTools from "./assets/projects/stickyn/tools.png";
+import presencePrivacy from "./assets/projects/codex-presence/privacy.png";
+import presenceLayout from "./assets/projects/codex-presence/layout.png";
+import launcherBrand from "./assets/brand/wrakeeb.png";
 import dualLogo from "./assets/projects/dual-discord/logo.png";
 import dualProfiles from "./assets/projects/dual-discord/profiles.png";
 import dualSettings from "./assets/projects/dual-discord/settings.png";
@@ -101,3 +113,71 @@ export const projectMedia: Record<string, ProjectMedia> = {
     ],
   },
 };
+
+projectMedia["dual-steam"] = {
+  logo: steamLogo,
+  images: [
+    {
+      src: steamProfiles,
+      alt: "Dual Steam profile management screen",
+      caption: "Profiles · Release 3.4.0",
+    },
+    {
+      src: steamSettings,
+      alt: "Dual Steam general settings",
+      caption: "Settings · Release 3.4.0",
+    },
+    {
+      src: steamSharing,
+      alt: "Dual Steam optional sharing controls",
+      caption: "Sharing · Release 3.4.0",
+    },
+  ],
+};
+projectMedia["launcher-demo"] = {
+  logo: launcherBrand,
+  images: [
+    {
+      src: demoInstalled,
+      alt: "The independently installed Launcher Demo application",
+      caption: "Installed application · Demo 1.0.0",
+    },
+  ],
+};
+projectMedia["demo-script"] = { logo: launcherBrand };
+projectMedia["dual-discord"].images!.push(
+  {
+    src: dualFiles,
+    alt: "Dual Discord file storage controls",
+    caption: "Files · Windows reference",
+  },
+  {
+    src: dualUpdates,
+    alt: "Dual Discord update preferences",
+    caption: "Updates · Windows reference",
+  },
+);
+projectMedia["stickyn"].images!.push(
+  {
+    src: stickyInspector,
+    alt: "StickyN note inspector",
+    caption: "Inspector · Native 0.16.0",
+  },
+  {
+    src: stickyTools,
+    alt: "StickyN note tools",
+    caption: "Note tools · Native 0.16.0",
+  },
+);
+projectMedia["codex-presence"].images!.push(
+  {
+    src: presencePrivacy,
+    alt: "Codex Discord Rich Presence privacy controls",
+    caption: "Privacy · Current project documentation",
+  },
+  {
+    src: presenceLayout,
+    alt: "Codex Discord Rich Presence layout settings",
+    caption: "Layout · Current project documentation",
+  },
+);

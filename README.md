@@ -1,76 +1,83 @@
 # Wrakeeb Launcher
 
-A Windows desktop library for your applications. Link existing programs, browse the project collection, and keep the launcher updated. Built with Tauri 2, Rust and React.
+Applications, scripts and utilities in one Windows desktop library. Version **0.3.0** adds real GitHub downloads and independent package installation.
 
-## Download and run
+## Install on your PC
 
-Download the Windows x64 portable ZIP from [Releases](https://github.com/w-rakeeb/wrakeeb-launcher/releases/latest), extract into a writable folder, and run **Wrakeeb Launcher.exe**. Microsoft WebView2 is required. This early-access executable is not Authenticode-signed. Windows 11 x64 is the development environment; clean-machine and Windows 10 validation remain outstanding.
+Download the **Windows x64 setup executable** from [Releases](https://github.com/w-rakeeb/wrakeeb-launcher/releases/latest). Setup installs for the current Windows user, creates Start menu/desktop access and checks for Microsoft WebView2. An internet connection is needed if the runtime must be downloaded. No D: drive, fixed username or development tools are required.
 
-Your library starts empty. Use **Add application** to select a trusted Windows executable. Known existing installations may appear under **This computer**. Linking keeps app files and settings in place; removing a link does not uninstall it.
+Target platforms: **Windows 10 22H2 x64 and Windows 11 x64**. Built and tested locally on Windows 11. A separate Windows 10 machine has not yet been tested; ARM64 and 32-bit packages are not provided. The executable and setup are not Authenticode-signed.
 
-## Version 0.2.0
+A portable ZIP is also available. Extract it to a writable folder and run **Wrakeeb Launcher.exe**. Keep its adjacent data folder when upgrading or moving it. Existing portable libraries remain compatible.
 
-- Dual Discord colors by default; **Original charcoal** remains in Settings → Appearance.
-- Supplied Wrakeeb brand mark and one integrated, draggable title bar with window controls.
-- Consistent centered original-logo/name covers; original screenshots remain in project galleries.
-- Search, categories, favorites, grid/list views, recent-use sorting, missing-file feedback and activity.
-- Restrained transitions, compact layout and reduced motion.
-- Settings → Downloads: choose a local download folder. Downloads shows real launcher-package progress and cancellation.
-- Updates: installed/latest versions, last check, release notes, download and **Install & restart**. Optional background checks never block the local library.
+## Try a real installation
 
-## Launcher updates
+1. Open **Discover → Launcher Demo**.
+2. Download **Launcher-Demo-1.0.0.zip** from the live GitHub release files.
+3. Choose **Install package**, then **Launch installed app**.
+4. Close the launcher: the independently installed demo keeps running.
 
-The updater reads this repository's latest stable release and requires the fixed Windows asset name, expected size and GitHub SHA-256 asset digest. HTTPS hosts and download size are restricted. Downloads are checked again before installation. A helper waits for the launcher to exit, backs up its executable, replaces it and starts the new version. The interface must acknowledge readiness; failed starts restore the previous executable. Library data stays separate.
+The demo needs .NET Framework 4.8. Its optional sample note is stored under your Windows user profile. **Command Script Demo** is a separate, harmless CMD sample. Its source is included under examples/LauncherDemo.
 
-These checks provide integrity against GitHub metadata; they are not publisher signatures or Authenticode signing. Publish a new version rather than replacing release assets. Network failure leaves local apps usable.
+## Working features
 
-## Current boundaries
+- Curated applications, scripts and demonstration packages, with precise descriptions and original screenshot galleries.
+- Live GitHub release tag/date, repository description, release notes, asset names/sizes and checksums. Repository/release-history links open the publisher's source.
+- Direct downloads for release assets; curated portable ZIP, EXE and script installation. No automatic execution after downloading or installation.
+- Separate configurable download and application-installation directories in **Settings → Downloads**.
+- Byte progress, cancellation, verification results, persistent transfer feedback and explicit install/launch actions. One project package operation at a time.
+- Independent version folders, with previous versions retained and a local installation receipt. Installing a new package switches its library link; application-data migration is not automatic.
+- Link trusted local .exe, .cmd, .bat and .ps1 files with **Add application**. PowerShell follows the user's existing execution policy. Command script paths reject shell control characters.
+- Search, categories, favorites, grid/list views, recent-use sorting, missing-file feedback and activity history.
+- Dual Discord default, Original charcoal, Slate and Corporate light palettes; default/blue/teal/red/amber accent selection; compact layout and reduced motion.
+- Native integrated title bar, keyboard-accessible settings tabs and a desktop-shortcut action in **Settings → General**.
+- Separate optional launcher update checks, persistent version/check feedback, verified download, executable backup/replacement/restart and failed-start rollback.
 
-This release manages **local app links and launcher updates**. Individual catalog-app downloads, installation, app updates, repair and uninstall remain planned. Each app needs packaging and redistribution review before installation is offered. The chosen Downloads folder applies to launcher packages today; it is not an app install-location setting. Cancellation/retry work; pause/resume and a multi-app queue are not implemented.
+## Package boundaries
 
-Project logos/screenshots identify their corresponding apps without implying endorsement. See [image provenance](docs/PROJECT-IMAGES.md), [Coucou's original asset notice](docs/Coucou-asset-notice.md), and [reference license](docs/Dual-Discord-reference-license.txt). No third-party app executable is distributed. No blanket license is granted over third-party artwork.
+Native code pins each catalog project's GitHub repository and approved entry-point filename. Downloads require GitHub HTTPS release URLs, expected size and the GitHub SHA-256 asset digest. ZIP extraction rejects traversal, links, duplicate paths and excessive size/file counts. Installation uses a fresh folder, verifies the entry point, then saves its library record. A corrupt or changed package does not replace an existing installation.
+
+SHA-256 checks establish integrity against GitHub metadata; they are not publisher signatures or a security audit of every application. Each project retains its own requirements, licenses and behavior. Installer-style EXEs/MSIs, source archives and other files may require manual setup; there is no arbitrary silent-installer execution. Coucou and Vencord Auto Repair are direct-download/source entries rather than managed installation recipes.
+
+Pause/resume, a multi-package queue, managed app uninstall/repair, automatic app-data migration, automatic catalog-app updates and publisher signing are not implemented. Remove from library removes a link and preserves files. Each app's own updater remains independent.
 
 ## Data and recovery
 
-Keep the portable executable in a writable folder:
-
-| Path | Contents |
+| Location | Contents |
 |---|---|
-| data/library.json | App links, preferences and recent activity |
-| data/library.json.bak | Previous successful library state |
-| data/webview/ | Embedded browser profile |
-| data/launcher-update.json | Update feedback |
-| Downloads/ | Default download destination unless changed |
-| Backups/Launcher-update-* | Previous executable from an update |
+| Launcher folder/data/library.json | Links, installation receipts, preferences and recent activity |
+| Launcher folder/data/library.json.bak | Previous successful library state |
+| Launcher folder/data/webview/ | Embedded browser profile |
+| Launcher folder/data/package-operation.json | Latest package-operation receipt/status |
+| Launcher folder/data/launcher-update.json | Launcher update feedback |
+| Launcher folder/Downloads/ | Default download destination unless changed |
+| %LOCALAPPDATA%/Wrakeeb/Applications/ | Default independent application installations unless changed |
+| Launcher folder/Backups/Launcher-update-* | Previous executable from a launcher update |
 
-Back up the portable folder when moving computers. Unreadable/unsupported library data is preserved and reported. For manual recovery, close the launcher, preserve data, and replace only the executable with a working release. Restoring library.json.bak is a separate data-recovery action.
+The current-user installer uses a writable per-user installation folder; the portable edition must also be kept writable. No library/profile data is shipped in release packages. Back up your entire launcher data folder and your independent application folders before moving PCs or rolling back. Unreadable/unsupported library data is preserved and reported.
+
+Use [version history and restoration instructions](docs/VERSION-HISTORY.md). Releases are retained; existing public assets are not replaced. Archive bundles preserve recovered 0.1.0/0.1.1 executables and the original source snapshots, with their completeness limitations documented.
 
 ## Development
 
-Install Node.js, Rust's Windows MSVC toolchain, Microsoft C++ build tools and WebView2.
+Node.js 24, Rust 1.98 Windows MSVC, Microsoft C++ build tools and WebView2 are required.
 
 ```powershell
 npm ci
 npm run desktop
-```
-
-```powershell
-npm run build
 npm test
 npm run test:native
-# Start npm run preview in another terminal for browser tests:
-npm run test:ui
-npm run package
+npm run package:installer
 ```
 
-Production output: src-tauri/target/release/wrakeeb-launcher.exe. The interface is embedded. Browser preview cannot launch Windows programs; privileged operations go through scoped Rust commands.
+For browser tests, start npm run preview, then npm run test:ui. The browser preview cannot execute Windows programs. Native smoke and live package tests use isolated copies under runtime, with visible windows on a second monitor. The debug package test needs the preview server; production builds embed the UI. A localhost debugging endpoint is enabled only by test-launch environment variables.
 
-The native smoke script runs an isolated copy under runtime/native-qa and requires a second monitor for visible tests. Set WRAKEEB_QA_BINARY to a production binary to test that build. The live-update script exercises the public feed and replacement in another isolated copy. Its older-version override works only in debug builds; production ignores it. Debug endpoints are local and absent from ordinary launches.
+See [status](docs/STATUS.md), [changelog](docs/CHANGELOG.md), [catalog publishing guide](docs/CATALOG-PUBLISHING.md), [image provenance](docs/PROJECT-IMAGES.md), [research](docs/LAUNCHER-REFERENCES.md), and the [roadmap](docs/ROADMAP.md).
 
-See [status](docs/STATUS.md), [release notes](docs/CHANGELOG.md), [research](docs/LAUNCHER-REFERENCES.md), and the [full roadmap](docs/ROADMAP.md).
+Third-party artwork remains with its owners; see [Coucou's original notice](docs/Coucou-asset-notice.md) and the [design-reference license](docs/Dual-Discord-reference-license.txt). No third-party app binaries are bundled into the launcher itself.
 
 ## Screenshots
 
-![Original project artwork in the desktop collection](docs/images/discover.png)
+![Project collection](docs/images/discover.png)
 
-![Theme and motion preferences](docs/images/settings.png)
+![Appearance preferences](docs/images/settings.png)

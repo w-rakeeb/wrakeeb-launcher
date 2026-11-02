@@ -1,25 +1,27 @@
 # Build status — 2 November 2026
 
-## Current release: 0.2.0
+## Current milestone: 0.3.0
 
-Dual Discord default palette, selectable original charcoal, original brand mark, integrated window chrome, centered logo/name covers, screenshot galleries, motion controls, download destination and a dedicated launcher-update workspace.
+A working curated package launcher: live GitHub release files, verified downloads, independent portable application/script installation, library launch and standalone operation. Ten catalog projects, precise descriptions, original images, four themes, five accent options, separate storage preferences, a desktop shortcut action and a current-user NSIS installer.
 
-Launcher updates use stable GitHub metadata, restricted HTTPS hosts, size/SHA-256 validation, cancellable downloads, executable backups, atomic replacement, restart readiness and failed-start rollback. This is integrity verification, not publisher signing.
+The installer targets Windows 10 22H2 x64 and Windows 11 x64, rejects pre-Windows-10 systems, handles the WebView2 bootstrapper, and requires no fixed username or D: drive. The portable edition remains supported. Windows 11 is verified locally; a separate Windows 10 PC has not been tested.
 
-## Verification
+## Verified
 
-- TypeScript and production frontend build passed.
-- Three catalog unit checks and eight browser checks passed.
-- Twelve Rust tests passed, including corrupt download rejection, changed-target rejection, actual inert executable launch, replacement/restart, readiness and failed-start rollback.
-- Optimized desktop build passed native IPC/image/gallery/link/favorite/removal/preferences/restart smoke checks on the second monitor. Four workstation app links survived in isolated QA data.
-- Taste inspection: no failures; small-text warning only at 390px, below native minimum width.
+- TypeScript/production frontend and optimized native/NSIS builds.
+- Three catalog unit checks and eight browser checks, including layouts at 1440/900/768/390px.
+- Sixteen Rust tests: state preservation, native executable launch, stable metadata validation, checksum corruption, target changes, update readiness/rollback, ZIP traversal/duplicate rejection, and real hidden CMD/BAT execution from paths with spaces. PowerShell invocation preserves the existing execution policy.
+- Live GitHub demo download, corrupt-file rejection, chosen download/install roots, ZIP installation, launch and continued standalone use after launcher exit. Visible tests use monitor 2.
+- Actual current-user NSIS installation into an isolated directory, fresh empty library, writable data, four themes/five accents, keyboard settings tabs and native maximize/restore.
+- Actual public Dual Steam ZIP and demo CMD installation without running either. App settings/accounts/microphones/Steam state were not changed by those installations.
+- Isolated installer removal removed its registration while preserving its library, independent app folders and the personal portable copy.
+- Taste inspection at 1440/900/768px: zero failures and warnings. Screenshots reviewed, including dark/light settings.
+- Recovered 0.1.0/0.1.1 recovery bundles published with explicit source completeness notes; 0.2.0 retained. New version tags and release assets are preserved.
 
-## Outstanding
+## Boundaries
 
-Individual catalog-app package downloads, install/update/repair/uninstall, pause/resume, multi-app queue, Authenticode and publisher signatures, clean-machine testing, Windows 10/ARM64 and physical DPI/accessibility validation remain outstanding. File-picker interaction is not automated. User apps are not launched during QA; the launch test uses an inert generated executable.
+No claim of Windows 10 hardware validation, ARM64/32-bit validation, clean-PC dependency validation, Narrator/high-contrast/physical-DPI verification or measured superiority to other launchers. Native file/folder picker interaction is not automated. Windows binaries are unsigned.
 
-Live GitHub feed/download/replacement verification is recorded separately after publication. Personal library and unrelated apps are preserved.
+One package operation is supported at a time. Pause/resume, a multi-app queue, managed uninstall/repair, automatic catalog-app updates and application-data migration are not implemented. Each installation creates a fresh version folder and switches its link; older folders/data remain. Source/installer-style/unsupported assets are direct downloads only. GitHub SHA-256 integrity checks are not publisher signatures.
 
-## Live release verification
-
-The public v0.2.0 GitHub asset has the expected SHA-256 digest. An isolated debug fixture reporting 0.1.9 downloaded the real published 0.2.0 package to its configured folder, rejected a deliberately corrupted copy without replacing its executable, then installed the intact package and restarted into the optimized build. Readiness was acknowledged, the library file was unchanged, the old executable backup was present, and a fresh check reported current. Maximize, restore and close passed on monitor 2. Debug fixture startup requires the local preview server; the restarted release embeds its frontend.
+The latest code is tested before publishing; final live launcher-update and personal-library preservation results are recorded in the delivery report. No personal library/profile or QA data is included in GitHub source or release ZIPs.

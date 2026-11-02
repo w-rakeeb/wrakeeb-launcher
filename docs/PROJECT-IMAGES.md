@@ -35,3 +35,9 @@ Coucou's original asset notice is retained in Coucou-asset-notice.md. Images ide
 All fifteen bundled files match their recorded source hashes. The production frontend built successfully. Seven browser checks and three unit checks passed, including actual image decoding for all five cards and their logos, thumbnail selection, full-size viewing, and Escape returning to the same detail image. The final Windows executable is also checked for embedded asset loading before replacing the personal build.
 
 The prior executable and source/docs backup are in Backups/before-original-project-images-20261102. Existing library data is preserved during the replacement.
+
+## 0.3.0 imagery
+
+Added original Dual Discord Files/Updates reference captures, StickyN Inspector/Note tools captures, current Codex Discord Rich Presence Privacy/Layout documentation captures, and Dual Steam's original logo plus Profiles/Settings/Sharing release screenshots. Added an actual monitor-2 capture of the installed Launcher Demo. No generated replacement screenshots are used.
+
+Sources: Dual Discord's existing reference Screenshots directory; StickyN Documentation/Native-0.16.0/Evidence; Codex Discord Rich Presence GitHub/docs/screenshots/current; Dual Steam Public Source/docs/screenshots and Assets. Hashes and bundled paths are recorded in PROJECT-ASSET-SOURCES.json. Existing screenshots can depict versions different from the current public release; gallery captions state their reference.

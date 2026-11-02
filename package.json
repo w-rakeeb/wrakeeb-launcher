@@ -1,7 +1,7 @@
 {
   "name": "wrakeeb-launcher",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
@@ -12,7 +12,8 @@
     "test": "vitest run tests/catalog.test.ts",
     "test:ui": "playwright test",
     "test:native": "cargo test --manifest-path src-tauri/Cargo.toml",
-    "test:native-ui": "node tests/native-smoke.mjs"
+    "test:native-ui": "node tests/native-smoke.mjs",
+    "package:installer": "tauri build --bundles nsis"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.0",
