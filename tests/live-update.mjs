@@ -11,7 +11,7 @@ await mkdir(root, { recursive: true });
 const target = join(root, "Wrakeeb Launcher.exe");
 const downloads = join(root, "Chosen downloads");
 await mkdir(downloads, { recursive: true });
-await copyFile(resolve("src-tauri/target/debug/wrakeeb-launcher.exe"), target);
+await copyFile(resolve(process.env.WRAKEEB_PREVIOUS_BINARY || "Backups/before-v0.3.0-20261102/Wrakeeb Launcher.exe"), target);
 const port = 19424;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const hash = (data) => createHash("sha256").update(data).digest("hex");
@@ -20,7 +20,6 @@ const child = spawn(target, [], {
   stdio: "ignore",
   env: {
     ...process.env,
-    WRAKEEB_TEST_INSTALLED_VERSION: "0.2.0",
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-address=127.0.0.1 --remote-debugging-port=${port}`,
   },
 });

@@ -70,7 +70,7 @@ npm run test:native
 npm run package:installer
 ```
 
-For browser tests, start npm run preview, then npm run test:ui. The browser preview cannot execute Windows programs. Native smoke and live package tests use isolated copies under runtime, with visible windows on a second monitor. The debug package test needs the preview server; production builds embed the UI. A localhost debugging endpoint is enabled only by test-launch environment variables.
+For browser tests, start npm run preview, then npm run test:ui. The browser preview cannot execute Windows programs. Native smoke and live package tests use isolated copies under runtime, with visible windows on a second monitor. The debug package test needs the preview server; production builds embed the UI. For the live launcher upgrade test, supply an authentic earlier release using WRAKEEB_PREVIOUS_BINARY. A localhost debugging endpoint is enabled only by test-launch environment variables.
 
 See [status](docs/STATUS.md), [changelog](docs/CHANGELOG.md), [catalog publishing guide](docs/CATALOG-PUBLISHING.md), [image provenance](docs/PROJECT-IMAGES.md), [research](docs/LAUNCHER-REFERENCES.md), and the [roadmap](docs/ROADMAP.md).
 
