@@ -68,3 +68,9 @@ Production output: src-tauri/target/release/wrakeeb-launcher.exe. The interface 
 The native smoke script runs an isolated copy under runtime/native-qa and requires a second monitor for visible tests. Set WRAKEEB_QA_BINARY to a production binary to test that build. The live-update script exercises the public feed and replacement in another isolated copy. Its older-version override works only in debug builds; production ignores it. Debug endpoints are local and absent from ordinary launches.
 
 See [status](docs/STATUS.md), [release notes](docs/CHANGELOG.md), [research](docs/LAUNCHER-REFERENCES.md), and the [full roadmap](docs/ROADMAP.md).
+
+## Screenshots
+
+![Original project artwork in the desktop collection](docs/images/discover.png)
+
+![Theme and motion preferences](docs/images/settings.png)

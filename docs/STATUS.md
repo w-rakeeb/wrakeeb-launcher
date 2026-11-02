@@ -19,3 +19,7 @@ Launcher updates use stable GitHub metadata, restricted HTTPS hosts, size/SHA-25
 Individual catalog-app package downloads, install/update/repair/uninstall, pause/resume, multi-app queue, Authenticode and publisher signatures, clean-machine testing, Windows 10/ARM64 and physical DPI/accessibility validation remain outstanding. File-picker interaction is not automated. User apps are not launched during QA; the launch test uses an inert generated executable.
 
 Live GitHub feed/download/replacement verification is recorded separately after publication. Personal library and unrelated apps are preserved.
+
+## Live release verification
+
+The public v0.2.0 GitHub asset has the expected SHA-256 digest. An isolated debug fixture reporting 0.1.9 downloaded the real published 0.2.0 package to its configured folder, rejected a deliberately corrupted copy without replacing its executable, then installed the intact package and restarted into the optimized build. Readiness was acknowledged, the library file was unchanged, the old executable backup was present, and a fresh check reported current. Maximize, restore and close passed on monitor 2. Debug fixture startup requires the local preview server; the restarted release embeds its frontend.

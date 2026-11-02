@@ -59,3 +59,7 @@ Still to validate on real hardware: Windows high-contrast mode, Narrator, touch,
 - UI/UX Pro Max for desktop hierarchy, interaction and accessibility guidance.
 - daisyUI 5 with a deliberately customized desktop theme; React best-practices review for state, effects, semantics and bundle behavior.
 - Ponytail for a focused implementation without a server, account system or speculative plugin architecture.
+
+## 0.2.0 design update
+
+The user's Dual Discord palette replaces the earlier default; original charcoal remains selectable. A single integrated title bar contains native controls. Cards now present original-logo/name covers, while screenshots remain in details. Settings has Appearance/Downloads/General tabs. Updates presents versions, check time, release notes, explicit download/install phases and a visible folder destination. Downloads now shows real launcher-package progress/cancellation. See LAUNCHER-REFERENCES.md for researched patterns. The newest inspection has no failures and only a 390px small-text warning, below the native minimum.
