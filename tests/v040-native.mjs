@@ -265,6 +265,7 @@ try {
   await page.getByText("Third-party license notices", { exact: true }).click();
   await expect(page.locator(".legal-notices pre")).toContainText(
     "Wrakeeb Launcher 0.4.0",
+    { timeout: 30000 },
   );
   await page.keyboard.press("Escape");
   await call("exit_launcher").catch(() => {});

@@ -89,3 +89,7 @@ Compact File/Edit/View/Help menus replace the breadcrumb. Project pages separate
 New users default to the writable current-user Windows Programs folder named Wrakeeb Launcher, with per-project Downloads and Versions subfolders. Existing explicit folder choices and legacy receipts remain intact; no files are silently moved. Folder controls are available beside package operations.
 
 Read [privacy](PRIVACY.md), [security boundaries](SECURITY.md), [rights review](docs/RIGHTS-REVIEW.md) and [dependency notices](docs/THIRD-PARTY-NOTICES.txt). Coucou artwork is omitted from v0.4.0 because permission is unconfirmed; older archives have unresolved artwork permissions.
+
+![Project overview](docs/images/details.png)
+
+[0.4.0 validation and remaining limits](docs/VERIFICATION-v0.4.0.md).
