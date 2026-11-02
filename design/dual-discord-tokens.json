@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "sourceVersion": "2.7.1",
+  "colorFormat": "WPF #AARRGGBB or #RRGGBB",
+  "geometryUnit": "DIP",
+  "palette": {
+    "bg.window": {
+      "dark": "#16171A",
+      "light": "#F3F4F6"
+    },
+    "bg.surface": {
+      "dark": "#1E2024",
+      "light": "#FFFFFF"
+    },
+    "bg.surfaceRaised": {
+      "dark": "#26282D",
+      "light": "#F8F9FB"
+    },
+    "bg.surfaceHover": {
+      "dark": "#2C2F35",
+      "light": "#E5E8EE"
+    },
+    "bg.overlay": {
+      "dark": "#80000000",
+      "light": "#80000000"
+    },
+    "border.subtle": {
+      "dark": "#14FFFFFF",
+      "light": "#14000000"
+    },
+    "border.strong": {
+      "dark": "#747B88",
+      "light": "#747B88"
+    },
+    "text.primary": {
+      "dark": "#F2F3F5",
+      "light": "#1F2124"
+    },
+    "bg.sidebar": {
+      "dark": "#16171A",
+      "light": "#F3F4F6"
+    },
+    "border.sidebar": {
+      "dark": "#2AFFFFFF",
+      "light": "#33000000"
+    },
+    "text.secondary": {
+      "dark": "#B5BAC1",
+      "light": "#4E5058"
+    },
+    "text.muted": {
+      "dark": "#9AA0AA",
+      "light": "#60656F"
+    },
+    "text.disabled": {
+      "dark": "#9AA0AA",
+      "light": "#60656F"
+    },
+    "accent.default": {
+      "dark": "#5865F2",
+      "light": "#5865F2"
+    },
+    "accent.hover": {
+      "dark": "#5966E5",
+      "light": "#5966E5"
+    },
+    "accent.pressed": {
+      "dark": "#4752C4",
+      "light": "#4752C4"
+    },
+    "accent.subtle": {
+      "dark": "#295865F2",
+      "light": "#295865F2"
+    },
+    "accent.text": {
+      "dark": "#AEB9FF",
+      "light": "#4752C4"
+    },
+    "accent.onAccent": {
+      "dark": "#FFFFFF",
+      "light": "#FFFFFF"
+    },
+    "status.success": {
+      "dark": "#3BA55D",
+      "light": "#3BA55D"
+    },
+    "status.successText": {
+      "dark": "#57D68D",
+      "light": "#1E7040"
+    },
+    "status.successBg": {
+      "dark": "#263BA55D",
+      "light": "#E2F1E7"
+    },
+    "status.warning": {
+      "dark": "#F0B232",
+      "light": "#F0B232"
+    },
+    "status.warningText": {
+      "dark": "#F0C66D",
+      "light": "#755000"
+    },
+    "status.warningBg": {
+      "dark": "#26F0B232",
+      "light": "#FDF3DE"
+    },
+    "status.danger": {
+      "dark": "#ED4245",
+      "light": "#ED4245"
+    },
+    "status.dangerText": {
+      "dark": "#FF9B9E",
+      "light": "#A92B30"
+    },
+    "status.dangerBg": {
+      "dark": "#26ED4245",
+      "light": "#FCE3E4"
+    },
+    "status.neutral": {
+      "dark": "#80848E",
+      "light": "#80848E"
+    },
+    "status.neutralText": {
+      "dark": "#B5BAC1",
+      "light": "#545B67"
+    },
+    "status.neutralBg": {
+      "dark": "#2680848E",
+      "light": "#E5E7EB"
+    },
+    "focus.ring": {
+      "dark": "#8EA1FF",
+      "light": "#4752C4"
+    }
+  },
+  "constants": {
+    "ScrollInset": 20.0,
+    "FileHintHeight": 36.0,
+    "FileRowHeight": 112.0,
+    "StatusWidth": 76.0,
+    "ActionWidth": 64.0,
+    "Space": 4.0,
+    "Padding": 24.0,
+    "CardPadding": 16.0,
+    "Gap": 12.0,
+    "RowHeight": 64.0,
+    "Hit": 32.0,
+    "ButtonHeight": 36.0,
+    "Rail": 200.0,
+    "NarrowRail": 56.0,
+    "NarrowAt": 860.0,
+    "PageSize": 24.0,
+    "TitleSize": 14.0,
+    "BodySize": 13.0,
+    "NoteSize": 12.0,
+    "CardRadius": 10.0,
+    "ButtonRadius": 6.0,
+    "ContentMax": 1080.0,
+    "ProseMax": 520.0,
+    "HoverMs": 150.0,
+    "ToastMs": 2500.0,
+    "FooterHeight": 56.0,
+    "UtilityIconSize": 18.0,
+    "SettingsIconSize": 16.0,
+    "StatusRadius": 4.0,
+    "MarkerInset": 8.0,
+    "CaptionHeight": 36.0,
+    "CaptionButtonWidth": 40.0,
+    "CaptionIconSize": 12.0,
+    "BrandIconSize": 16.0
+  },
+  "fonts": {
+    "app": [
+      "Segoe UI Variable",
+      "Segoe UI",
+      "System message font"
+    ],
+    "mono": [
+      "Cascadia Mono",
+      "Consolas"
+    ],
+    "icons": [
+      "Segoe Fluent Icons",
+      "Segoe MDL2 Assets"
+    ]
+  }
+}

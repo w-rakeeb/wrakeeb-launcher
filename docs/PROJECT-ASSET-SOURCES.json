@@ -1,0 +1,107 @@
+[
+  {
+    "app": "dual-discord",
+    "file": "src/assets/projects/dual-discord/logo.png",
+    "source": "D:\\Codex\\Dual Discord\\Assets\\Dual Discord.png",
+    "caption": "Original manager logo",
+    "sha256": "249ae3a4a3985da65650d013ab8230ad14421b7b4dfbe4bdd96c582674b66b30"
+  },
+  {
+    "app": "dual-discord",
+    "file": "src/assets/projects/dual-discord/profiles.png",
+    "source": "D:\\Codex\\Dual Discord\\Reusable Kits\\Dual Discord Theme Design\\Reference\\Screenshots\\Dark-100-wide-Profiles.png",
+    "caption": "Profiles \u2014 original Windows reference capture",
+    "sha256": "e9f9e2a6cf9d344ec2211e1faac858169a631bb6fbbaf4804dd0af7f1b34fc8f"
+  },
+  {
+    "app": "dual-discord",
+    "file": "src/assets/projects/dual-discord/settings.png",
+    "source": "D:\\Codex\\Dual Discord\\Reusable Kits\\Dual Discord Theme Design\\Reference\\Screenshots\\Dark-100-min-Settings.png",
+    "caption": "Settings \u2014 original Windows reference capture",
+    "sha256": "89e8f8dd9ad9057bf6ef9edcab18350dc33a95fb07b1f35931af9d894623e7fc"
+  },
+  {
+    "app": "stickyn",
+    "file": "src/assets/projects/stickyn/logo.png",
+    "source": "D:\\Codex\\Sticky Note\\Source\\Assets\\logo.png",
+    "caption": "Original StickyN application icon",
+    "sha256": "90bba416cc863d4cd98cb9a1392f50416a36dab3f9559ee06000d210c9f64cc2"
+  },
+  {
+    "app": "stickyn",
+    "file": "src/assets/projects/stickyn/workspace.png",
+    "source": "D:\\Codex\\Sticky Note\\Documentation\\Native-0.16.0\\Evidence\\Large-six-notes.png",
+    "caption": "Workspace \u2014 native 0.16.0 review capture",
+    "sha256": "b3e2f614c353731aae8167e903cb0acc136d33e36b498bbd63303a804f414105"
+  },
+  {
+    "app": "stickyn",
+    "file": "src/assets/projects/stickyn/settings.png",
+    "source": "D:\\Codex\\Sticky Note\\Documentation\\Native-0.16.0\\Evidence\\Settings.png",
+    "caption": "Settings \u2014 native 0.16.0 review capture",
+    "sha256": "80696c1fdde1d5f01339db87e3a671e360d7ebb2bae984f4eb0ea0db61ab34ef"
+  },
+  {
+    "app": "codex-presence",
+    "file": "src/assets/projects/codex-presence/logo.png",
+    "source": "D:\\Codex\\Codex Presence\\Assets\\logo-256.png",
+    "caption": "Original application logo",
+    "sha256": "efe450995567c3eb74d41d46979b8386125c1b193b32b44b3b573f9ac25d8a4a"
+  },
+  {
+    "app": "codex-presence",
+    "file": "src/assets/projects/codex-presence/thumbnail.png",
+    "source": "D:\\Codex\\Codex Presence\\Branding\\2026-10-27\\social-card.png",
+    "caption": "Original Codex Presence social card",
+    "sha256": "95134feda65d10933faf11ac0aa2fb4bfa579448ba537fb7b0fb93a6162731ec"
+  },
+  {
+    "app": "codex-presence",
+    "file": "src/assets/projects/codex-presence/overview.png",
+    "source": "D:\\Codex\\Codex Discord Rich Presence\\GitHub\\docs\\screenshots\\current\\Overview.png",
+    "caption": "Workspace \u2014 original project documentation capture",
+    "sha256": "8033cc9bd8da70320c182c12a924628a78a6f5f5044864131e4a0e1fa7359ae0"
+  },
+  {
+    "app": "coucou",
+    "file": "src/assets/projects/coucou/logo.png",
+    "source": "D:\\Codex\\Coucou\\GitHub\\windows\\src-tauri\\icons\\icon.png",
+    "caption": "Original Windows application icon",
+    "sha256": "18b0bc3a9eef3ff4a6125f5056386df207253610c4cada116619bad732ae6d1b"
+  },
+  {
+    "app": "coucou",
+    "file": "src/assets/projects/coucou/overview.png",
+    "source": "D:\\Codex\\Coucou\\GitHub\\windows\\screenshots\\overview.png",
+    "caption": "Windows overview \u2014 original project capture",
+    "sha256": "07300265c15e02a66fb4357c7b2164cc587664974048b891dc136ccc762d8b64"
+  },
+  {
+    "app": "coucou",
+    "file": "src/assets/projects/coucou/thumbnail.png",
+    "source": "D:\\Codex\\Coucou\\GitHub\\docs\\media\\coucou.png",
+    "caption": "Original Coucou project demo image",
+    "sha256": "c2987407ef1b60a9d0d11f05f42bfbb5e6b3f7127a3def654219f2a3ff216936"
+  },
+  {
+    "app": "pulsemute",
+    "file": "src/assets/projects/pulsemute/logo.png",
+    "source": "D:\\Codex\\PulseMute Project\\Public Release\\Github Release\\PulseMute\\Source\\PulseMute-professional-256.png",
+    "caption": "Original application icon",
+    "sha256": "d6879176faf85479fcb7cf4ed76731469e3a39def8db71ae9a03697944fcb433"
+  },
+  {
+    "app": "pulsemute",
+    "file": "src/assets/projects/pulsemute/main.png",
+    "source": "D:\\Codex\\PulseMute Project\\Public Release\\Github Release\\PulseMute\\Screenshots\\main-window.png",
+    "caption": "Main window \u2014 original release screenshot",
+    "sha256": "c690988a28652c59bb5f07e9e4bcd6a6c64ec1b9de0c876266f9406158ef35e9"
+  },
+  {
+    "app": "pulsemute",
+    "file": "src/assets/projects/pulsemute/settings.png",
+    "source": "D:\\Codex\\PulseMute Project\\Public Release\\Github Release\\PulseMute\\Screenshots\\settings-general.png",
+    "caption": "General settings \u2014 original release screenshot",
+    "sha256": "d31e2af7d9ad775e061996f16cd273c0b4c977cd3763e50fbed721bded269e3e"
+  }
+]
