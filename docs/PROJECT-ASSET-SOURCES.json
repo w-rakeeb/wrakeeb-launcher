@@ -63,27 +63,6 @@
     "sha256": "8033cc9bd8da70320c182c12a924628a78a6f5f5044864131e4a0e1fa7359ae0"
   },
   {
-    "app": "coucou",
-    "file": "src/assets/projects/coucou/logo.png",
-    "source": "D:\\Codex\\Coucou\\GitHub\\windows\\src-tauri\\icons\\icon.png",
-    "caption": "Original Windows application icon",
-    "sha256": "18b0bc3a9eef3ff4a6125f5056386df207253610c4cada116619bad732ae6d1b"
-  },
-  {
-    "app": "coucou",
-    "file": "src/assets/projects/coucou/overview.png",
-    "source": "D:\\Codex\\Coucou\\GitHub\\windows\\screenshots\\overview.png",
-    "caption": "Windows overview \u2014 original project capture",
-    "sha256": "07300265c15e02a66fb4357c7b2164cc587664974048b891dc136ccc762d8b64"
-  },
-  {
-    "app": "coucou",
-    "file": "src/assets/projects/coucou/thumbnail.png",
-    "source": "D:\\Codex\\Coucou\\GitHub\\docs\\media\\coucou.png",
-    "caption": "Original Coucou project demo image",
-    "sha256": "c2987407ef1b60a9d0d11f05f42bfbb5e6b3f7127a3def654219f2a3ff216936"
-  },
-  {
     "app": "pulsemute",
     "file": "src/assets/projects/pulsemute/logo.png",
     "source": "D:\\Codex\\PulseMute Project\\Public Release\\Github Release\\PulseMute\\Source\\PulseMute-professional-256.png",
@@ -180,5 +159,26 @@
     "source": "D:\\Codex\\Sticky Note\\Documentation\\Native-0.16.0\\Evidence\\Note-tools.png",
     "caption": "tools",
     "sha256": "d4cefc11f0ecd83123242b79cc8555b4b3bbeda8d4d9ce71620ac4e331891326"
+  },
+  {
+    "app": "brightness-control",
+    "file": "src/assets/projects/brightness-control/logo.svg",
+    "source": "https://github.com/w-rakeeb/brightness-control/blob/aba1f586e3456f38ece6e6612bb208f4a3bf96a5/src/BrightnessControl/assets/icon.svg",
+    "caption": "Original official project asset",
+    "sha256": "3b88eddd03d2abecd5343ddb9f34e274cb8b293da6d0c715afb514bba1afdfb2"
+  },
+  {
+    "app": "brightness-control",
+    "file": "src/assets/projects/brightness-control/main.jpg",
+    "source": "https://github.com/w-rakeeb/brightness-control/blob/aba1f586e3456f38ece6e6612bb208f4a3bf96a5/website/public/screenshots/brightness-control-main.jpg",
+    "caption": "Original official project asset",
+    "sha256": "7f5394ed8e50041e8169ae6ee65a2e5dba160ea973813d2884e4a1239317259e"
+  },
+  {
+    "app": "brightness-control",
+    "file": "src/assets/projects/brightness-control/settings.jpg",
+    "source": "https://github.com/w-rakeeb/brightness-control/blob/aba1f586e3456f38ece6e6612bb208f4a3bf96a5/website/public/screenshots/brightness-control-settings.jpg",
+    "caption": "Original official project asset",
+    "sha256": "e30f0d6369f03019b0e0c1fe49c816cd1ac312e8803bcb7ceee765d3c2e59dcc"
   }
 ]

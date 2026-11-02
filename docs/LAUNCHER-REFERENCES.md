@@ -17,3 +17,15 @@ The user's Dual Discord design supplies default surface, text, border, accent an
 Dual Steam's existing updater informed stable-release selection, trusted asset checks, persistent feedback and backup/recovery. The launcher-specific Rust implementation adds cancellation, configurable destination, readiness acknowledgment and its own Updates screen. No Steam account/profile management behavior is imported. No Heroic/Playnite application code is copied.
 
 Taste Skill inspection at 1440, 768 and 390px reported no failures and one small-text warning at 390px. The desktop minimum is 760×560. The user's palette takes priority over generic art-direction restrictions. Reduced motion is respected.
+
+## 0.4.0 reference review — 3 November 2026
+
+Applied local daisyUI, UI/UX Pro Max and Taste app-screen guidance: accessible controls, consistent visual hierarchy, restrained transitions and responsive layouts. Skills are implementation guidance, not product dependencies.
+
+- Microsoft navigation basics: https://learn.microsoft.com/en-us/windows/apps/design/basics/navigation-basics — flatter primary navigation, no workspace breadcrumb.
+- Anthropic frontend-design reference: https://github.com/anthropics/skills/tree/main/skills/frontend-design — typography, deliberate composition and avoiding generic decoration; no always-on integration installed.
+- Tauri tray guide: https://v2.tauri.app/learn/system-tray/ — native icon, menu and restoration behavior.
+- GitHub API terms: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#h-api-terms — normal API use, cached release metadata, no bypass of rate limits.
+- GitHub privacy policy: https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement — disclosed GitHub network requests.
+
+No claim of superiority or a complete legal compliance certification is made.

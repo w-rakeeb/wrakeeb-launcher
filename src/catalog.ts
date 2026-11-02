@@ -195,6 +195,12 @@ export interface Preferences {
   rememberPage: boolean;
   theme?: "discord" | "wrakeeb" | "slate" | "light";
   accent?: "default" | "blue" | "teal" | "red" | "amber";
+  closeToTray?: boolean;
+  minimizeToTray?: boolean;
+  scanOnStart?: boolean;
+  scanDownloads?: boolean;
+  recordActivity?: boolean;
+  largeText?: boolean;
   installDirectory?: string | null;
   downloadDirectory?: string | null;
   checkUpdatesOnStart?: boolean;
@@ -218,6 +224,7 @@ export interface Snapshot {
   dataDirectory: string;
   downloadDirectory?: string;
   installDirectory?: string;
+  detectedApps?: DetectedApp[];
 }
 export interface Installation {
   catalogId: string;
@@ -225,6 +232,16 @@ export interface Installation {
   directory: string;
   entry: string;
   sha256: string;
+  packageName?: string;
+  packageBytes?: number;
+  installedBytes?: number;
+  installedAt?: number;
+}
+export interface DetectedApp {
+  catalogId: string;
+  path: string;
+  source: string;
+  executableBytes: number;
 }
 export type Page =
   | "library"
@@ -236,6 +253,7 @@ export type Page =
 export type ViewApp = CatalogApp & {
   linked?: LinkedApp;
   installed?: Installation;
+  detected?: DetectedApp;
   available: boolean;
   missing: boolean;
 };
@@ -248,6 +266,7 @@ export function appViews(snapshot: Snapshot): ViewApp[] {
       (i) => i.catalogId === app.id,
     ),
     available: snapshot.availableIds.includes(app.id),
+    detected: snapshot.detectedApps?.find((i) => i.catalogId === app.id),
     missing: snapshot.store.apps.some(
       (link) =>
         link.catalogId === app.id && snapshot.missingIds.includes(link.id),

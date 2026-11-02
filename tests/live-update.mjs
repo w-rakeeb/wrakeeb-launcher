@@ -6,12 +6,18 @@ import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import { onSecondMonitor } from "./second-monitor.mjs";
 
-const root = resolve("runtime/upgrade-qa");
+const root = resolve("runtime/upgrade-v040-qa");
 await mkdir(root, { recursive: true });
 const target = join(root, "Wrakeeb Launcher.exe");
 const downloads = join(root, "Chosen downloads");
 await mkdir(downloads, { recursive: true });
-await copyFile(resolve(process.env.WRAKEEB_PREVIOUS_BINARY || "Backups/before-v0.3.0-20261102/Wrakeeb Launcher.exe"), target);
+await copyFile(
+  resolve(
+    process.env.WRAKEEB_PREVIOUS_BINARY ||
+      "Backups/before-v0.4.0-20261103/Wrakeeb Launcher.exe",
+  ),
+  target,
+);
 const port = 19424;
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const hash = (data) => createHash("sha256").update(data).digest("hex");
@@ -74,12 +80,12 @@ try {
     await delay(250);
   const available = await call("check_launcher_updates");
   assert.equal(available.stage, "available", available.message);
-  assert.equal(available.installedVersion, "0.2.0");
+  assert.equal(available.installedVersion, "0.3.0");
   const downloaded = await call("download_launcher_update");
   assert.equal(downloaded.stage, "downloaded", downloaded.message);
   assert.equal(
     resolve(downloaded.downloadPath),
-    join(downloads, "Wrakeeb-Launcher-0.3.0-Windows-x64.exe"),
+    join(downloads, "Wrakeeb-Launcher-0.4.0-Windows-x64.exe"),
   );
   const original = await readFile(downloaded.downloadPath);
   const publishedHash = hash(original);
@@ -131,7 +137,7 @@ try {
     hash(await readFile(join(root, "data/library.json"))),
     hash(library),
   );
-  assert.equal((await call("get_update_status")).installedVersion, "0.3.0");
+  assert.equal((await call("get_update_status")).installedVersion, "0.4.0");
   let result;
   for (let i = 0; i < 120; i++) {
     try {

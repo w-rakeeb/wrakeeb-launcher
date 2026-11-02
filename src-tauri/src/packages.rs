@@ -14,14 +14,18 @@ use tauri::{Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 
 const MAX_DOWNLOAD: u64 = 512 * 1024 * 1024;
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
 pub struct Installation {
     pub catalog_id: String,
     pub version: String,
     pub directory: String,
     pub entry: String,
     pub sha256: String,
+    pub package_name: String,
+    pub package_bytes: u64,
+    pub installed_bytes: u64,
+    pub installed_at: u64,
 }
 pub struct Project {
     repo: &'static str,
@@ -60,6 +64,43 @@ fn project(id: &str) -> Result<Project, String> {
     };
     Ok(Project { repo, tag, entry })
 }
+fn preferred_package(p: &Project, name: &str) -> bool {
+    match p.entry {
+        Some("Dual Steam.exe") => name == "Dual-Steam-Windows.zip",
+        Some("Dual Discord.exe") => name == "Dual-Discord-Windows.zip",
+        Some("Codex Presence.exe") => {
+            name.starts_with("Codex-Discord-Rich-Presence-") && name.ends_with("-windows-x64.zip")
+        }
+        Some("BrightnessControl.exe") => name == "Brightness.Control.Universal.zip",
+        Some("Wrakeeb-Launcher-Demo-Windows-x64.exe") => name == "Launcher-Demo-1.0.0.zip",
+        Some(entry) => name == entry,
+        None => {
+            p.repo == "w-rakeeb/vencord-auto-repair" && name == "Vencord-Auto-Repair-Windows.zip"
+        }
+    }
+}
+fn approved_package(p: &Project, name: &str) -> bool {
+    p.entry
+        .is_some_and(|entry| name == entry || preferred_package(p, name))
+}
+fn directory_bytes(root: &Path) -> Result<u64, String> {
+    let mut total = 0u64;
+    let mut pending = vec![root.to_path_buf()];
+    while let Some(folder) = pending.pop() {
+        for item in fs::read_dir(folder).map_err(|e| e.to_string())? {
+            let item = item.map_err(|e| e.to_string())?;
+            let metadata = item.metadata().map_err(|e| e.to_string())?;
+            if metadata.is_dir() {
+                pending.push(item.path());
+            } else {
+                total = total
+                    .checked_add(metadata.len())
+                    .ok_or("Installed size overflow")?;
+            }
+        }
+    }
+    Ok(total)
+}
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Asset {
@@ -81,6 +122,8 @@ pub struct ProjectRelease {
     notes: String,
     assets: Vec<Asset>,
     checked_at: u64,
+    recommended_asset_id: Option<u64>,
+    license: String,
 }
 fn json(url: &str) -> Result<serde_json::Value, String> {
     let response = updates::client()?
@@ -122,7 +165,7 @@ fn parse_release(p: &Project, value: &serde_json::Value) -> Result<ProjectReleas
         .as_str()
         .filter(|v| safe_name(v))
         .ok_or("Invalid release tag")?;
-    let assets = value["assets"]
+    let assets: Vec<Asset> = value["assets"]
         .as_array()
         .ok_or("No release files are available")?
         .iter()
@@ -144,14 +187,7 @@ fn parse_release(p: &Project, value: &serde_json::Value) -> Result<ProjectReleas
             {
                 return None;
             }
-            let extension = Path::new(name)
-                .extension()?
-                .to_string_lossy()
-                .to_ascii_lowercase();
-            let installable = p.entry.is_some_and(|entry| {
-                (extension == "zip" && !name.to_ascii_lowercase().contains("source"))
-                    || name == entry
-            });
+            let installable = approved_package(p, name);
             Some(Asset {
                 id: a["id"].as_u64()?,
                 name: name.into(),
@@ -174,6 +210,12 @@ fn parse_release(p: &Project, value: &serde_json::Value) -> Result<ProjectReleas
             .chars()
             .take(16000)
             .collect(),
+        recommended_asset_id: assets
+            .iter()
+            .find(|a| preferred_package(p, &a.name))
+            .or_else(|| assets.iter().find(|a| a.installable))
+            .map(|a| a.id),
+        license: "See repository".into(),
         assets,
         checked_at: now(),
     })
@@ -222,6 +264,11 @@ pub async fn get_project_release(
                 .chars()
                 .take(1000)
                 .collect();
+            result.license = repo["license"]["spdx_id"]
+                .as_str()
+                .filter(|v| *v != "NOASSERTION")
+                .unwrap_or("See repository")
+                .into();
         }
         if let Ok(mut values) = cache.lock() {
             values.insert(id, result.clone());
@@ -328,14 +375,30 @@ pub async fn download_project_asset(
     asset_id: u64,
     app: tauri::AppHandle,
 ) -> Result<PackageStatus, String> {
+    transfer(id, Some(asset_id), app).await
+}
+#[tauri::command]
+pub async fn download_latest_project(
+    id: String,
+    app: tauri::AppHandle,
+) -> Result<PackageStatus, String> {
+    transfer(id, None, app).await
+}
+async fn transfer(
+    id: String,
+    asset_id: Option<u64>,
+    app: tauri::AppHandle,
+) -> Result<PackageStatus, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let p = app.state::<Packages>(); let _busy = begin(&p)?; p.cancel.store(false, Ordering::SeqCst);
+        p.set(&app, |s| *s = PackageStatus { stage: "downloading".into(), project_id: id.clone(), message: "Checking the latest GitHub package…".into(), ..Default::default() }, true)?;
         let result = (|| {
             let release = release(&id)?;
-            let asset = release.assets.iter().find(|a| a.id == asset_id).ok_or("This release file changed. Refresh the release details.")?.clone();
+            let selected = asset_id.or(release.recommended_asset_id).ok_or("No recommended package is published. Open GitHub releases to choose a file.")?;
+            let asset = release.assets.iter().find(|a| a.id == selected).ok_or("This release file changed. Refresh the release details.")?.clone();
             p.set(&app, |s| { *s = PackageStatus { stage: "downloading".into(), project_id: id.clone(), name: asset.name.clone(), version: release.version.clone(), message: "Downloading from GitHub…".into(), total_bytes: asset.size, asset: Some(asset.clone()), ..Default::default() }; }, true)?;
             let base = updates::download_directory(&app.state::<Library>())?; fs::create_dir_all(&base).map_err(|e| e.to_string())?;
-            let directory = local_directory(&base)?.join("Packages").join(&id); fs::create_dir_all(&directory).map_err(|e| e.to_string())?; reject_links(&directory)?;
+            let directory = local_directory(&base)?.join(&id).join("Downloads"); fs::create_dir_all(&directory).map_err(|e| e.to_string())?; reject_links(&directory)?;
             let destination = directory.join(format!("{}-{}-{}", release.version, &asset.digest[..8], asset.name));
             if destination.exists() { verify(&destination, &asset)?; }
             else {
@@ -370,15 +433,35 @@ pub fn install_directory(library: &Library) -> Result<PathBuf, String> {
         .preferences
         .install_directory
         .clone();
-    selected.map(PathBuf::from).map(Ok).unwrap_or_else(|| {
-        Ok(PathBuf::from(
-            std::env::var_os("LOCALAPPDATA")
-                .ok_or("Your Windows local application folder is unavailable")?,
-        )
-        .join("Wrakeeb")
-        .join("Applications"))
-    })
+    selected
+        .map(PathBuf::from)
+        .map(Ok)
+        .unwrap_or_else(default_storage_root)
 }
+pub fn default_storage_root() -> Result<PathBuf, String> {
+    Ok(PathBuf::from(
+        std::env::var_os("LOCALAPPDATA")
+            .ok_or("Your Windows user application folder is unavailable")?,
+    )
+    .join("Programs")
+    .join("Wrakeeb Launcher"))
+}
+pub fn operation_directory(packages: &Packages, library: &Library) -> Result<PathBuf, String> {
+    let path = packages
+        .status
+        .lock()
+        .map_err(|_| "Package status is busy")?
+        .path
+        .clone();
+    match path {
+        Some(path) => PathBuf::from(path)
+            .parent()
+            .map(Path::to_path_buf)
+            .ok_or("The package folder is unavailable.".into()),
+        None => updates::download_directory(library),
+    }
+}
+
 fn reject_links(path: &Path) -> Result<(), String> {
     for ancestor in path.ancestors() {
         let metadata = fs::symlink_metadata(ancestor).map_err(|e| e.to_string())?;
@@ -490,14 +573,14 @@ pub async fn install_project_package(app: tauri::AppHandle) -> Result<PackageSta
             let library = app.state::<Library>(); let root = install_directory(&library)?;
             fs::create_dir_all(&root).map_err(|_| "The installation folder could not be created.")?;
             let root = local_directory(&root)?; reject_links(&root)?;
-            let parent = root.join(&status.project_id); fs::create_dir_all(&parent).map_err(|e| e.to_string())?; reject_links(&parent)?;
+            let parent = root.join(&status.project_id).join("Versions"); fs::create_dir_all(&parent).map_err(|e| e.to_string())?; reject_links(&parent)?;
             let directory = parent.join(format!("{}-{}", release.version, uuid::Uuid::new_v4())); fs::create_dir(&directory).map_err(|e| e.to_string())?;
             p.set(&app, |s| { s.stage = "installing".into(); s.message = "Installing into a separate application folder…".into(); }, true)?;
             let installed = (|| {
                 if asset.name.to_ascii_lowercase().ends_with(".zip") { unpack(&source, &directory)?; }
                 else { fs::copy(&source, directory.join(entry_name)).map_err(|e| e.to_string())?; }
                 let entry = find_entry(&directory, entry_name)?;
-                let installation = Installation { catalog_id: status.project_id.clone(), version: release.version.clone(), directory: directory.to_string_lossy().into_owned(), entry: entry.to_string_lossy().into_owned(), sha256: asset.digest.clone() };
+                let installation = Installation { catalog_id: status.project_id.clone(), version: release.version.clone(), directory: directory.to_string_lossy().into_owned(), entry: entry.to_string_lossy().into_owned(), sha256: asset.digest.clone(), package_name: asset.name.clone(), package_bytes: asset.size, installed_bytes: directory_bytes(&directory)?, installed_at: now() };
                 atomic_json(&directory.join("wrakeeb-installation.json"), &installation)?;
                 mutate(&library, |store| {
                     if let Some(existing) = store.apps.iter_mut().find(|a| a.catalog_id.as_deref() == Some(&status.project_id)) { existing.path = installation.entry.clone(); }
@@ -518,6 +601,10 @@ pub async fn choose_install_directory(app: tauri::AppHandle) -> Result<Option<St
         let Some(file) = app
             .dialog()
             .file()
+            .set_parent(
+                &app.get_webview_window("main")
+                    .ok_or("Launcher window unavailable")?,
+            )
             .set_title("Choose an application installation folder")
             .blocking_pick_folder()
         else {
@@ -574,6 +661,18 @@ pub async fn create_desktop_shortcut() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn only_curated_release_packages_are_installable() {
+        let steam = project("dual-steam").unwrap();
+        assert!(approved_package(&steam, "Dual-Steam-Windows.zip"));
+        assert!(!approved_package(&steam, "Source.zip"));
+        assert!(!approved_package(&steam, "Other-Installer.exe"));
+        assert!(!approved_package(&project("coucou").unwrap(), "Coucou.zip"));
+        assert!(!approved_package(
+            &project("vencord-repair").unwrap(),
+            "Repair.zip"
+        ));
+    }
     #[test]
     fn release_rejects_foreign_urls_and_bad_checksums() {
         let p = project("launcher-demo").unwrap();

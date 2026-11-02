@@ -259,15 +259,10 @@ pub fn download_directory(library: &Library) -> Result<PathBuf, String> {
         .preferences
         .download_directory
         .clone();
-    Ok(selected.map(PathBuf::from).unwrap_or(
-        library
-            .file
-            .parent()
-            .ok_or("Invalid app location")?
-            .parent()
-            .ok_or("Invalid app location")?
-            .join("Downloads"),
-    ))
+    selected
+        .map(PathBuf::from)
+        .map(Ok)
+        .unwrap_or_else(crate::packages::default_storage_root)
 }
 fn output_path(directory: &Path, release: &Release) -> PathBuf {
     directory.join(format!(

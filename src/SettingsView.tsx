@@ -21,6 +21,7 @@ export function SettingsView({
   help,
   chooseInstallDirectory,
   createShortcut,
+  clearActivity,
 }: {
   snapshot: Snapshot;
   busy: boolean;
@@ -32,8 +33,10 @@ export function SettingsView({
   help: () => void;
   chooseInstallDirectory: () => void;
   createShortcut: () => void;
+  clearActivity: () => void;
 }) {
   const [tab, setTab] = useState("appearance");
+  const [confirmClear, setConfirmClear] = useState(false);
   const prefs = snapshot.store.preferences;
   return (
     <div className="settings-content">
@@ -70,6 +73,7 @@ export function SettingsView({
           { id: "appearance", label: "Appearance", icon: Palette },
           { id: "downloads", label: "Downloads", icon: HardDrive },
           { id: "general", label: "General", icon: Settings2 },
+          { id: "privacy", label: "Privacy", icon: Settings2 },
         ].map((item) => (
           <button
             key={item.id}
@@ -152,6 +156,13 @@ export function SettingsView({
                 <p>Choose the density and movement that feel right.</p>
               </div>
               <div className="settings-panel">
+                <Setting
+                  label="Larger interface text"
+                  description="Increase text and control sizes while keeping the layout responsive."
+                  checked={prefs.largeText ?? false}
+                  disabled={busy || !desktop}
+                  change={(value) => change({ largeText: value })}
+                />
                 <Setting
                   label="Compact library"
                   description="Smaller covers and closer spacing."
@@ -248,8 +259,141 @@ export function SettingsView({
               </div>
             </section>
           </>
+        ) : tab === "privacy" ? (
+          <>
+            <section className="settings-section">
+              <div>
+                <h2>Privacy</h2>
+                <p>
+                  No launcher account, advertising analytics or usage telemetry.
+                </p>
+              </div>
+              <div className="settings-panel data-panel">
+                <strong>What stays on your PC</strong>
+                <p>
+                  Your library, application paths, preferences and history are
+                  stored locally. Scans inspect application filenames and
+                  executable headers in common local folders and selected
+                  install locations; they do not upload the results.
+                </p>
+                <strong>What connects to GitHub</strong>
+                <p>
+                  Release checks and downloads send normal HTTPS requests to
+                  GitHub. GitHub receives your IP address and the launcher user
+                  agent. The launcher sends no library contents, account
+                  credentials or app profiles.
+                </p>
+                <p>
+                  Installed programs have their own permissions, network
+                  behavior and privacy policies. SHA-256 checks confirm package
+                  integrity; they are not malware scans or publisher signatures.
+                </p>
+              </div>
+            </section>
+            <section className="settings-section">
+              <div>
+                <h2>Activity history</h2>
+                <p>Control the local record of launcher actions.</p>
+              </div>
+              <div className="settings-panel">
+                <Setting
+                  label="Record launcher activity"
+                  description="Store up to 100 recent additions, installations and launch requests locally."
+                  checked={prefs.recordActivity ?? true}
+                  disabled={busy || !desktop}
+                  change={(value) => change({ recordActivity: value })}
+                />
+                {confirmClear ? (
+                  <div className="activity-clear-confirm">
+                    <p>
+                      Clear this launcher's activity list? Previous-state
+                      backups may still contain older history.
+                    </p>
+                    <button
+                      className="btn btn-sm btn-error"
+                      disabled={busy}
+                      onClick={() => {
+                        clearActivity();
+                        setConfirmClear(false);
+                      }}
+                    >
+                      Clear activity history
+                    </button>
+                    <button
+                      className="btn btn-sm btn-ghost"
+                      onClick={() => setConfirmClear(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="btn btn-sm"
+                    disabled={busy || !desktop}
+                    onClick={() => setConfirmClear(true)}
+                  >
+                    Clear activity…
+                  </button>
+                )}
+              </div>
+            </section>
+          </>
         ) : (
           <>
+            <section className="settings-section">
+              <div>
+                <h2>Window and tray</h2>
+                <p>The tray icon remains available while the launcher runs.</p>
+              </div>
+              <div className="settings-panel">
+                <Setting
+                  label="Close to system tray"
+                  description="The close button hides the window. Use File → Exit or the tray menu to quit."
+                  checked={prefs.closeToTray ?? false}
+                  disabled={busy || !desktop}
+                  change={(value) => change({ closeToTray: value })}
+                />
+                <Setting
+                  label="Minimize to system tray"
+                  description="Hide the minimized window from the taskbar; reopen it from the tray."
+                  checked={prefs.minimizeToTray ?? false}
+                  disabled={busy || !desktop}
+                  change={(value) => change({ minimizeToTray: value })}
+                />
+                <p className="setting-help">
+                  Windows may initially place new tray icons in the overflow
+                  menu. The launcher does not change your Windows
+                  notification-area preferences.
+                </p>
+              </div>
+            </section>
+            <section className="settings-section">
+              <div>
+                <h2>App discovery</h2>
+                <p>Locate existing copies without changing their files.</p>
+              </div>
+              <div className="settings-panel">
+                <Setting
+                  label="Scan common folders on startup"
+                  description="Check known installations and common application folders in the background."
+                  checked={prefs.scanOnStart ?? true}
+                  disabled={busy || !desktop}
+                  change={(value) => change({ scanOnStart: value })}
+                />
+                <Setting
+                  label="Include Downloads in scans"
+                  description="Find extracted GitHub releases in your Windows Downloads folder. ZIP files must be installed before they can run."
+                  checked={prefs.scanDownloads ?? true}
+                  disabled={busy || !desktop}
+                  change={(value) => change({ scanDownloads: value })}
+                />
+                <p className="setting-help">
+                  Scans are bounded and skip junctions, backups, build output
+                  and browser profiles. Use Locate app for other folders. A
+                  filename match is not publisher verification.
+                </p>
+              </div>
+            </section>
             <section className="settings-section">
               <div>
                 <h2>Startup</h2>

@@ -7,6 +7,8 @@ import {
   PanelsTopLeft,
   StickyNote,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { CatalogApp } from "./catalog";
 
@@ -14,14 +16,14 @@ export function AppGlyph({
   app,
   size = 20,
 }: {
-  app: Pick<CatalogApp, "glyph" | "logo">;
+  app: Pick<CatalogApp, "glyph" | "logo" | "logoTreatment">;
   size?: number;
 }) {
   const [failed, setFailed] = useState(false);
   if (app.logo && !failed) {
     return (
       <img
-        className="project-logo"
+        className={`project-logo ${app.logoTreatment === "paper" ? "logo-on-paper" : ""}`}
         src={app.logo}
         width={size}
         height={size}
@@ -62,33 +64,78 @@ export function ProjectGallery({ app }: { app: CatalogApp }) {
     <section
       className="project-gallery"
       aria-label={`${app.name} project images`}
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (
+          ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key) &&
+          images.length > 1
+        ) {
+          event.preventDefault();
+          setSelected((value) =>
+            event.key === "Home"
+              ? 0
+              : event.key === "End"
+                ? images.length - 1
+                : (value +
+                    (event.key === "ArrowRight" ? 1 : -1) +
+                    images.length) %
+                  images.length,
+          );
+        }
+      }}
     >
-      <button
-        className="project-image-stage"
-        disabled={failed === image.src}
-        onClick={() => dialog.current?.showModal()}
-        aria-label={`Enlarge ${app.name} image: ${image.caption}`}
-      >
-        {failed === image.src ? (
-          <div className="project-art-fallback">
-            <AppGlyph app={app} size={64} />
-            <span>Preview unavailable</span>
+      <div className="project-stage-wrap">
+        <button
+          className="project-image-stage"
+          disabled={failed === image.src}
+          onClick={() => dialog.current?.showModal()}
+          aria-label={`Enlarge ${app.name} image: ${image.caption}`}
+        >
+          {failed === image.src ? (
+            <div className="project-art-fallback">
+              <AppGlyph app={app} size={64} />
+              <span>Preview unavailable</span>
+            </div>
+          ) : (
+            <>
+              <img
+                src={image.src}
+                alt={image.alt}
+                decoding="async"
+                onError={() => setFailed(image.src)}
+              />
+              <span className="image-expand">
+                <Expand size={15} aria-hidden="true" />
+                View image
+              </span>
+            </>
+          )}
+        </button>
+        {images.length > 1 && (
+          <div className="gallery-arrows">
+            <button
+              className="btn btn-sm btn-square"
+              aria-label="Previous project image"
+              onClick={() =>
+                setSelected(
+                  (value) => (value - 1 + images.length) % images.length,
+                )
+              }
+            >
+              <ChevronLeft size={19} />
+            </button>
+            <button
+              className="btn btn-sm btn-square"
+              aria-label="Next project image"
+              onClick={() =>
+                setSelected((value) => (value + 1) % images.length)
+              }
+            >
+              <ChevronRight size={19} />
+            </button>
           </div>
-        ) : (
-          <>
-            <img
-              src={image.src}
-              alt={image.alt}
-              decoding="async"
-              onError={() => setFailed(image.src)}
-            />
-            <span className="image-expand">
-              <Expand size={15} aria-hidden="true" />
-              View image
-            </span>
-          </>
         )}
-      </button>
+      </div>
       <div className="gallery-caption">
         <span>{image.caption}</span>
         <span>
@@ -135,6 +182,35 @@ export function ProjectGallery({ app }: { app: CatalogApp }) {
             </form>
           </div>
           <img className="full-project-image" src={image.src} alt={image.alt} />
+          {images.length > 1 && (
+            <div className="image-viewer-controls">
+              <button
+                className="btn btn-sm"
+                aria-label="Previous enlarged image"
+                onClick={() =>
+                  setSelected(
+                    (value) => (value - 1 + images.length) % images.length,
+                  )
+                }
+              >
+                <ChevronLeft size={17} />
+                Previous
+              </button>
+              <span>
+                {selected + 1} / {images.length}
+              </span>
+              <button
+                className="btn btn-sm"
+                aria-label="Next enlarged image"
+                onClick={() =>
+                  setSelected((value) => (value + 1) % images.length)
+                }
+              >
+                Next
+                <ChevronRight size={17} />
+              </button>
+            </div>
+          )}
         </div>
         <form method="dialog" className="modal-backdrop">
           <button>Close image</button>

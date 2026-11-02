@@ -15,7 +15,10 @@ export function WindowControls() {
         win
           .isMaximized()
           .then((value) => {
-            if (active) setMaximized(value);
+            if (active) {
+              setMaximized(value);
+              document.documentElement.classList.toggle("maximized", value);
+            }
           })
           .catch(() => {});
       };

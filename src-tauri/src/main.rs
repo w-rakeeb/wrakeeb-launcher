@@ -11,7 +11,9 @@ use std::{
 };
 use tauri::{Manager, State};
 use tauri_plugin_dialog::DialogExt;
+mod discovery;
 mod packages;
+mod shell;
 mod updates;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -36,6 +38,12 @@ struct Preferences {
     check_updates_on_start: bool,
     install_directory: Option<String>,
     accent: String,
+    close_to_tray: bool,
+    minimize_to_tray: bool,
+    scan_on_start: bool,
+    scan_downloads: bool,
+    record_activity: bool,
+    large_text: bool,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -48,6 +56,12 @@ impl Default for Preferences {
             check_updates_on_start: true,
             install_directory: None,
             accent: "default".into(),
+            close_to_tray: false,
+            minimize_to_tray: false,
+            scan_on_start: true,
+            scan_downloads: true,
+            record_activity: true,
+            large_text: false,
         }
     }
 }
@@ -93,6 +107,7 @@ struct Snapshot {
     data_directory: String,
     download_directory: String,
     install_directory: String,
+    detected_apps: Vec<discovery::DetectedApp>,
 }
 
 fn now() -> u64 {
@@ -110,6 +125,7 @@ fn candidate(id: &str) -> Option<(&'static str, &'static str)> {
             r"D:\Codex\Codex Presence\Codex Presence.exe",
         )),
         "coucou" => Some(("Coucou", r"E:\Coucou\coucou.exe")),
+        "dual-steam" => Some(("Dual Steam", r"D:\Codex\Dual Steam\Dual Steam.exe")),
         _ => None,
     }
 }
@@ -230,6 +246,9 @@ fn save(file: &Path, store: &Store) -> Result<(), String> {
     fs::rename(temp, file).map_err(|e| e.to_string())
 }
 fn log(store: &mut Store, name: &str, action: &str) {
+    if !store.preferences.record_activity {
+        return;
+    }
     store.activity.insert(
         0,
         Activity {
@@ -256,17 +275,17 @@ fn mutate<T>(
     Ok(result)
 }
 #[tauri::command]
-fn snapshot(library: State<Library>) -> Result<Snapshot, String> {
+fn snapshot(
+    library: State<Library>,
+    discovery: State<discovery::Discovery>,
+) -> Result<Snapshot, String> {
     let store = library
         .store
         .lock()
         .map_err(|_| "Library is busy".to_string())?
         .clone();
-    let available_ids = ["dual-discord", "stickyn", "codex-presence", "coucou"]
-        .iter()
-        .filter(|id| candidate(id).is_some_and(|(_, path)| executable(Path::new(path)).is_ok()))
-        .map(|id| id.to_string())
-        .collect();
+    let detected_apps = discovery::current(&library, &discovery)?;
+    let available_ids = detected_apps.iter().map(|a| a.catalog_id.clone()).collect();
     let missing_ids = store
         .apps
         .iter()
@@ -276,6 +295,7 @@ fn snapshot(library: State<Library>) -> Result<Snapshot, String> {
     Ok(Snapshot {
         store,
         available_ids,
+        detected_apps,
         missing_ids,
         download_directory: updates::download_directory(&library)?
             .to_string_lossy()
@@ -322,9 +342,21 @@ fn add(
     })
 }
 #[tauri::command]
-fn link_catalog_app(id: String, library: State<Library>) -> Result<String, String> {
-    let (name, path) = candidate(&id).ok_or("No detected local installation for this app. Use Add application to choose its executable.")?;
-    add(&library, name.into(), path.into(), Some(id))
+fn link_catalog_app(
+    id: String,
+    library: State<Library>,
+    discovery: State<discovery::Discovery>,
+) -> Result<String, String> {
+    let found = discovery::current(&library, &discovery)?
+        .into_iter()
+        .find(|a| a.catalog_id == id)
+        .ok_or("No installation was found. Use Locate app to choose its file.")?;
+    add(
+        &library,
+        discovery::name(&id).into(),
+        found.path.into(),
+        Some(id),
+    )
 }
 #[tauri::command]
 async fn pick_application(app: tauri::AppHandle) -> Result<Option<String>, String> {
@@ -332,6 +364,10 @@ async fn pick_application(app: tauri::AppHandle) -> Result<Option<String>, Strin
         let selected = app
             .dialog()
             .file()
+            .set_parent(
+                &app.get_webview_window("main")
+                    .ok_or("Launcher window unavailable")?,
+            )
             .set_title("Add an app or script to Wrakeeb Launcher")
             .add_filter("Applications and scripts", &["exe", "cmd", "bat", "ps1"])
             .blocking_pick_file();
@@ -342,17 +378,23 @@ async fn pick_application(app: tauri::AppHandle) -> Result<Option<String>, Strin
             .into_path()
             .map_err(|_| "Choose a local file".to_string())?;
         let valid = launchable(&path)?;
-        let matching_id = ["dual-discord", "stickyn", "codex-presence", "coucou"]
-            .iter()
-            .find(|id| {
-                candidate(id)
-                    .and_then(|(_, candidate_path)| executable(Path::new(candidate_path)).ok())
-                    .is_some_and(|candidate_path| {
-                        candidate_path
-                            .to_string_lossy()
-                            .eq_ignore_ascii_case(&valid.to_string_lossy())
-                    })
-            });
+        let matching_id = [
+            "dual-discord",
+            "stickyn",
+            "codex-presence",
+            "coucou",
+            "dual-steam",
+        ]
+        .iter()
+        .find(|id| {
+            candidate(id)
+                .and_then(|(_, candidate_path)| executable(Path::new(candidate_path)).ok())
+                .is_some_and(|candidate_path| {
+                    candidate_path
+                        .to_string_lossy()
+                        .eq_ignore_ascii_case(&valid.to_string_lossy())
+                })
+        });
         let name = matching_id
             .and_then(|id| candidate(id).map(|(name, _)| name.to_string()))
             .unwrap_or_else(|| {
@@ -516,6 +558,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
                 let _ = window.unminimize();
                 let _ = window.set_focus();
             }
@@ -529,6 +572,7 @@ fn main() {
             let file = directory.join("library.json");
             app.manage(updates::Updates::new(&directory));
             app.manage(packages::Packages::new(&directory));
+            app.manage(discovery::Discovery::default());
             // Preserve unreadable data: commands return this startup error instead of overwriting it.
             let initial = read_store(&file);
             match initial {
@@ -556,9 +600,20 @@ fn main() {
             .background_color(tauri::window::Color(22, 23, 26, 255))
             .data_directory(directory.join("webview"))
             .build()?;
+            shell::setup(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            discovery::scan_installed_apps,
+            discovery::locate_catalog_app,
+            discovery::reveal_catalog_app,
+            clear_activity,
+            shell::hide_to_tray,
+            shell::show_launcher,
+            shell::exit_launcher,
+            shell::get_shell_status,
+            shell::open_storage_directory,
+            packages::download_latest_project,
             packages::get_project_release,
             packages::get_package_status,
             packages::download_project_asset,
@@ -589,6 +644,13 @@ fn main() {
         .expect("Could not start Wrakeeb Launcher");
 }
 struct StartupError(String);
+#[tauri::command]
+fn clear_activity(library: State<Library>) -> Result<(), String> {
+    mutate(&library, |store| {
+        store.activity.clear();
+        Ok(())
+    })
+}
 pub fn atomic_json(file: &Path, value: &impl Serialize) -> Result<(), String> {
     let parent = file.parent().ok_or("Invalid data directory")?;
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -632,6 +694,10 @@ async fn choose_download_directory(app: tauri::AppHandle) -> Result<Option<Strin
         let selected = app
             .dialog()
             .file()
+            .set_parent(
+                &app.get_webview_window("main")
+                    .ok_or("Launcher window unavailable")?,
+            )
             .set_title("Choose your download folder")
             .set_directory(default)
             .blocking_pick_folder();
@@ -700,7 +766,7 @@ fn get_snapshot(app: tauri::AppHandle) -> Result<Snapshot, String> {
     if let Some(error) = app.try_state::<StartupError>() {
         return Err(error.0.clone());
     }
-    snapshot(app.state::<Library>())
+    snapshot(app.state::<Library>(), app.state::<discovery::Discovery>())
 }
 
 #[cfg(test)]

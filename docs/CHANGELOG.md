@@ -1,5 +1,16 @@
 # Release history
 
+## 0.4.0 — 3 November 2026
+
+- Rebuilt shell navigation with File/Edit/View/Help, integrated caption controls and quieter sidebar; removed workspace breadcrumb and redundant footer.
+- Redesigned app details into Overview/Downloads/Information with image controls, GitHub release facts, file sizes and installation receipts.
+- Added direct latest-package downloads, in-place storage choices and per-user Programs/Wrakeeb Launcher per-app storage defaults. Explicit existing paths are preserved.
+- Added bounded Scan/Locate and fixed existing Dual Steam detection; detected apps can be launched or linked explicitly.
+- Added native tray Open/Settings/Exit, optional close/minimize behavior, larger text, startup scanning and local history controls.
+- Corrected Brightness Control artwork, contrast, file-kind colors and responsive labels. Removed restricted Coucou artwork from current release pending permission.
+- Restricted managed packages to curated recipes; included privacy/security boundaries, artwork provenance and third-party notices. Historical release permissions are explicitly documented.
+
+
 ## 0.3.0 — 2 November 2026
 
 Added actual GitHub project downloads, SHA-256/size verification, safe portable ZIP extraction, independent application installation, installation receipts and explicit launch. Added standalone GUI and CMD demos. Local .exe/.cmd/.bat/.ps1 linking is supported. Downloads and installation roots are configured separately; existing versions/data remain preserved.

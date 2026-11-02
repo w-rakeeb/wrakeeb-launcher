@@ -25,12 +25,21 @@ test("browser preview: discover, filter, details, help and honest downloads", as
   await expect(
     page.getByRole("heading", { name: "StickyN", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("GitHub Releases", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "View downloads", exact: true })).toBeVisible();
-  await expect(page.getByText("Open the desktop application to load live GitHub release details.")).toBeVisible();
+  await expect(
+    page.getByText("GitHub Releases", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Download", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("tab", { name: "Downloads", exact: true }).click();
+  await expect(
+    page.getByText(
+      "Open the desktop application to load live GitHub release details.",
+    ),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Downloads", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "No package transfers" }),
+    page.getByRole("heading", { name: "No downloads yet" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "About & help" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -167,8 +176,9 @@ test("desktop bridge: linked app favorites, launch errors, removal, settings and
   await expect(page.getByRole("status")).toContainText("Changes saved");
   await page.getByRole("button", { name: "Library", exact: true }).click();
   await page.getByRole("button", { name: "StickyN", exact: true }).click();
+  await page.getByLabel("Project options", { exact: true }).click();
   await page
-    .getByRole("button", { name: "Remove from library", exact: true })
+    .getByRole("button", { name: "Remove library link", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
     "files and its settings stay",
@@ -178,11 +188,15 @@ test("desktop bridge: linked app favorites, launch errors, removal, settings and
     .getByRole("button", { name: "Remove from library", exact: true })
     .click();
   await expect(
-    page.getByText("0 in library", { exact: true }),
+    page.getByRole("heading", { name: "StickyN", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("status")).toContainText(
     "Application files were kept",
   );
+  await page.getByLabel("Project options", { exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Remove library link", exact: true }),
+  ).toHaveCount(0);
 });
 
 for (const width of [1440, 900, 768, 390]) {
@@ -199,6 +213,26 @@ for (const width of [1440, 900, 768, 390]) {
       .locator("main")
       .evaluate((el) => el.scrollWidth > el.clientWidth);
     expect(mainOverflow).toBe(false);
+    const rail = page.getByRole("complementary", { name: "Main navigation" });
+    const railBox = await rail.boundingBox();
+    for (const label of [
+      "Library",
+      "Discover",
+      "Downloads",
+      "Updates",
+      "Activity",
+      "Settings",
+      "About & help",
+    ]) {
+      const button = rail.getByRole("button", { name: label, exact: true });
+      await expect(button).toBeVisible();
+      const box = await button.boundingBox();
+      expect(box!.x).toBeGreaterThanOrEqual(railBox!.x);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(
+        railBox!.x + railBox!.width + 1,
+      );
+    }
+
     await page.screenshot({
       path: `runtime/screenshots/discover-${width}.png`,
       fullPage: true,
@@ -211,3 +245,75 @@ for (const width of [1440, 900, 768, 390]) {
     ).toBe(false);
   });
 }
+
+test("direct latest download errors stay attached to the selected project", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis, "isTauri", { value: true });
+    (
+      window as unknown as { __TAURI_INTERNALS__: unknown }
+    ).__TAURI_INTERNALS__ = {
+      invoke: async (name: string, args: Record<string, unknown> = {}) => {
+        if (name === "get_snapshot")
+          return {
+            store: {
+              schema: 1,
+              apps: [],
+              activity: [],
+              installations: [],
+              preferences: {
+                scanOnStart: false,
+                checkUpdatesOnStart: false,
+                rememberPage: true,
+              },
+            },
+            availableIds: [],
+            missingIds: [],
+            detectedApps: [],
+            dataDirectory: "D:/QA/data",
+          };
+        if (name === "get_package_status")
+          return {
+            stage: "",
+            projectId: "",
+            name: "",
+            message: "",
+            downloadedBytes: 0,
+            totalBytes: 0,
+          };
+        if (name === "download_latest_project")
+          return {
+            stage: "error",
+            projectId: args.id,
+            name: "",
+            message: "GitHub could not serve the latest package.",
+            downloadedBytes: 0,
+            totalBytes: 0,
+          };
+        if (name === "get_project_release")
+          throw new Error("Release lookup unavailable.");
+        if (name === "confirm_frontend_ready") return;
+        throw new Error(`Unexpected test command ${name}`);
+      },
+    };
+  });
+  await page.goto("/#discover");
+  await page.getByRole("button", { name: "Discover", exact: true }).click();
+  const demo = page.locator(".app-item").filter({
+    has: page.getByRole("button", { name: "Launcher Demo", exact: true }),
+  });
+  await demo.getByRole("button", { name: "Download", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Launcher Demo", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("tab", { name: "Downloads", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByLabel("Package operation")).toContainText(
+    "GitHub could not serve the latest package.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Install package", exact: true }),
+  ).toHaveCount(0);
+});

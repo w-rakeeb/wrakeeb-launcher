@@ -1,0 +1,65 @@
+[
+  {
+    "component": "alloc-stdlib",
+    "version": "0.3.0",
+    "license": "BSD-3-Clause",
+    "source": "https://raw.githubusercontent.com/dropbox/rust-alloc-no-stdlib/master/LICENSE",
+    "gitBlob": "cd496ba72eb37e83a44958358d1f89a8a28cbc15",
+    "file": "docs/references/upstream-licenses/alloc-stdlib-0.3.0.txt"
+  },
+  {
+    "component": "tauri-plugin",
+    "version": "2.7.2",
+    "license": "Apache-2.0",
+    "source": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/LICENSE-APACHE-2.0",
+    "gitBlob": "f433b1a53f5b830a205fd2df78e2b34974656c7b",
+    "file": "docs/references/upstream-licenses/tauri-plugin-2.7.2.txt"
+  },
+  {
+    "component": "webview2-com",
+    "version": "0.39.1",
+    "license": "MIT",
+    "source": "https://raw.githubusercontent.com/wravery/webview2-rs/main/LICENSE",
+    "gitBlob": "de9a7e660e173136b351982a34f715af424ff812",
+    "file": "docs/references/upstream-licenses/webview2-com-0.39.1.txt"
+  },
+  {
+    "component": "webview2-com-macros",
+    "version": "0.8.1",
+    "license": "MIT",
+    "source": "https://raw.githubusercontent.com/wravery/webview2-rs/main/LICENSE",
+    "gitBlob": "de9a7e660e173136b351982a34f715af424ff812",
+    "file": "docs/references/upstream-licenses/webview2-com-macros-0.8.1.txt"
+  },
+  {
+    "component": "webview2-com-sys",
+    "version": "0.39.1",
+    "license": "MIT",
+    "source": "https://raw.githubusercontent.com/wravery/webview2-rs/main/LICENSE",
+    "gitBlob": "de9a7e660e173136b351982a34f715af424ff812",
+    "file": "docs/references/upstream-licenses/webview2-com-sys-0.39.1.txt"
+  },
+  {
+    "component": "@rolldown/binding-win32-x64-msvc",
+    "file": "docs/references/upstream-licenses/rolldown-binding-win32-x64-msvc-LICENSE",
+    "source": "Matching installed parent package rolldown"
+  },
+  {
+    "component": "@tauri-apps/cli-win32-x64-msvc",
+    "file": "docs/references/upstream-licenses/tauri-apps-cli-win32-x64-msvc-LICENSE-APACHE-2.0",
+    "source": "Matching installed parent package @tauri-apps/cli"
+  },
+  {
+    "component": "@tauri-apps/cli-win32-x64-msvc",
+    "file": "docs/references/upstream-licenses/tauri-apps-cli-win32-x64-msvc-LICENSE-MIT",
+    "source": "Matching installed parent package @tauri-apps/cli"
+  },
+  {
+    "component": "selectors",
+    "version": "0.38.0",
+    "license": "MPL-2.0",
+    "source": "https://www.mozilla.org/media/MPL/2.0/index.txt",
+    "componentSource": "https://crates.io/crates/selectors/0.38.0",
+    "file": "docs/references/upstream-licenses/selectors-MPL-2.0.txt"
+  }
+]

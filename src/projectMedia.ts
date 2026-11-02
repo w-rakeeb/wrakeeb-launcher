@@ -1,3 +1,6 @@
+import brightnessLogo from "./assets/projects/brightness-control/logo.svg";
+import brightnessMain from "./assets/projects/brightness-control/main.jpg";
+import brightnessSettings from "./assets/projects/brightness-control/settings.jpg";
 import demoInstalled from "./assets/projects/launcher-demo/installed.png";
 import steamLogo from "./assets/projects/dual-steam/logo.png";
 import steamProfiles from "./assets/projects/dual-steam/profiles.png";
@@ -19,9 +22,6 @@ import stickySettings from "./assets/projects/stickyn/settings.png";
 import presenceLogo from "./assets/projects/codex-presence/logo.png";
 import presenceThumbnail from "./assets/projects/codex-presence/thumbnail.png";
 import presenceOverview from "./assets/projects/codex-presence/overview.png";
-import coucouLogo from "./assets/projects/coucou/logo.png";
-import coucouThumbnail from "./assets/projects/coucou/thumbnail.png";
-import coucouOverview from "./assets/projects/coucou/overview.png";
 import pulseLogo from "./assets/projects/pulsemute/logo.png";
 import pulseMain from "./assets/projects/pulsemute/main.png";
 import pulseSettings from "./assets/projects/pulsemute/settings.png";
@@ -33,6 +33,7 @@ export interface ProjectImage {
 }
 export interface ProjectMedia {
   logo?: string;
+  logoTreatment?: "paper";
   images?: ProjectImage[];
 }
 
@@ -82,21 +83,7 @@ export const projectMedia: Record<string, ProjectMedia> = {
       },
     ],
   },
-  coucou: {
-    logo: coucouLogo,
-    images: [
-      {
-        src: coucouThumbnail,
-        alt: "Original Coucou project demo showing the Mochi character",
-        caption: "Original project demo",
-      },
-      {
-        src: coucouOverview,
-        alt: "Coucou Windows overview with integration panels",
-        caption: "Overview · Windows",
-      },
-    ],
-  },
+  coucou: {},
   pulsemute: {
     logo: pulseLogo,
     images: [
@@ -181,3 +168,20 @@ projectMedia["codex-presence"].images!.push(
     caption: "Layout · Current project documentation",
   },
 );
+
+projectMedia["brightness-control"] = {
+  logo: brightnessLogo,
+  logoTreatment: "paper",
+  images: [
+    {
+      src: brightnessMain,
+      alt: "Official Brightness Control main window",
+      caption: "Main window · Official project screenshot",
+    },
+    {
+      src: brightnessSettings,
+      alt: "Official Brightness Control settings",
+      caption: "Settings · Official project screenshot",
+    },
+  ],
+};

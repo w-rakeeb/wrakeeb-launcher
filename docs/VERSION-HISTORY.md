@@ -10,6 +10,8 @@ Releases retain binaries, checksums, source references and change notes. Never f
 | Demo 1.0.0 | Standalone GUI and CMD samples | [Separate demo release](https://github.com/w-rakeeb/wrakeeb-launcher/releases/tag/demo-v1.0.0); not the launcher update channel |
 | 0.3.0 | GitHub packages, independent installation, script support, per-user Windows installer, catalog information, galleries, themes/accents and UI cleanup | [Release and source tag](https://github.com/w-rakeeb/wrakeeb-launcher/releases/tag/v0.3.0) |
 
+| 0.4.0 | Tray, bounded discovery, direct latest downloads, per-app storage, project tabs/gallery, typography and rights notices | [Release and source tag](https://github.com/w-rakeeb/wrakeeb-launcher/releases/tag/v0.4.0) |
+
 The two archival tags identify recovered bundles, not original historical Git commits. The 0.1.0 source archive is partial; 0.1.1 has flattened native paths and is not a complete reproducible build archive. Those limitations are stated in each release. Full Git source history begins with 0.2.0.
 
 ## Restore an executable
@@ -25,3 +27,5 @@ A rollback does not automatically undo app installations or migrate a newer libr
 ## Restore source
 
 For versions from 0.2.0 onward, create a separate Git worktree at the version tag, run npm ci, use the recorded Rust toolchain and Cargo.lock, then build. Do not overwrite a working checkout with unfinished changes. Third-party downloads and tool availability can still affect historical builds.
+
+Historical Coucou artwork permissions are unresolved. Current release removal does not retroactively clear archived assets. See RIGHTS-REVIEW.md.

@@ -1,6 +1,6 @@
 # Wrakeeb Launcher
 
-Applications, scripts and utilities in one Windows desktop library. Version **0.3.0** adds real GitHub downloads and independent package installation.
+Applications, scripts and utilities in one Windows desktop library. Version **0.4.0** improves discovery, direct downloads, tray behavior and project details.
 
 ## Install on your PC
 
@@ -37,7 +37,7 @@ The demo needs .NET Framework 4.8. Its optional sample note is stored under your
 
 Native code pins each catalog project's GitHub repository and approved entry-point filename. Downloads require GitHub HTTPS release URLs, expected size and the GitHub SHA-256 asset digest. ZIP extraction rejects traversal, links, duplicate paths and excessive size/file counts. Installation uses a fresh folder, verifies the entry point, then saves its library record. A corrupt or changed package does not replace an existing installation.
 
-SHA-256 checks establish integrity against GitHub metadata; they are not publisher signatures or a security audit of every application. Each project retains its own requirements, licenses and behavior. Installer-style EXEs/MSIs, source archives and other files may require manual setup; there is no arbitrary silent-installer execution. Coucou and Vencord Auto Repair are direct-download/source entries rather than managed installation recipes.
+SHA-256 checks establish integrity against GitHub metadata; they are not publisher signatures or a security audit of every application. Each project retains its own requirements, licenses and behavior. Installer-style EXEs/MSIs, source archives and other files may require manual setup; there is no arbitrary silent-installer execution. Coucou is a neutral source entry and Vencord Auto Repair is a direct-download entry rather than managed installation recipes.
 
 Pause/resume, a multi-package queue, managed app uninstall/repair, automatic app-data migration, automatic catalog-app updates and publisher signing are not implemented. Remove from library removes a link and preserves files. Each app's own updater remains independent.
 
@@ -50,8 +50,8 @@ Pause/resume, a multi-package queue, managed app uninstall/repair, automatic app
 | Launcher folder/data/webview/ | Embedded browser profile |
 | Launcher folder/data/package-operation.json | Latest package-operation receipt/status |
 | Launcher folder/data/launcher-update.json | Launcher update feedback |
-| Launcher folder/Downloads/ | Default download destination unless changed |
-| %LOCALAPPDATA%/Wrakeeb/Applications/ | Default independent application installations unless changed |
+| %LOCALAPPDATA%/Programs/Wrakeeb Launcher/{project}/Downloads/ | Default project downloads unless changed |
+| %LOCALAPPDATA%/Programs/Wrakeeb Launcher/{project}/Versions/ | Independent application installations unless changed |
 | Launcher folder/Backups/Launcher-update-* | Previous executable from a launcher update |
 
 The current-user installer uses a writable per-user installation folder; the portable edition must also be kept writable. No library/profile data is shipped in release packages. Back up your entire launcher data folder and your independent application folders before moving PCs or rolling back. Unreadable/unsupported library data is preserved and reported.
@@ -81,3 +81,11 @@ Third-party artwork remains with its owners; see [Coucou's original notice](docs
 ![Project collection](docs/images/discover.png)
 
 ![Appearance preferences](docs/images/settings.png)
+
+## New in 0.4.0
+
+Compact File/Edit/View/Help menus replace the breadcrumb. Project pages separate Overview, Downloads and Information, with previous/next gallery controls and readable package state. Cards download the latest recommended package directly. Scan and Locate detect existing applications, including Dual Steam, without launching them. Native tray actions support Open, Settings and Exit, with optional close/minimize-to-tray. Settings add startup scanning, history privacy and larger text.
+
+New users default to the writable current-user Windows Programs folder named Wrakeeb Launcher, with per-project Downloads and Versions subfolders. Existing explicit folder choices and legacy receipts remain intact; no files are silently moved. Folder controls are available beside package operations.
+
+Read [privacy](PRIVACY.md), [security boundaries](SECURITY.md), [rights review](docs/RIGHTS-REVIEW.md) and [dependency notices](docs/THIRD-PARTY-NOTICES.txt). Coucou artwork is omitted from v0.4.0 because permission is unconfirmed; older archives have unresolved artwork permissions.

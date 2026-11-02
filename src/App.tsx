@@ -35,11 +35,14 @@ import { command, desktop, getSnapshot, savePreferences } from "./bridge";
 import { AppArtwork, AppGlyph, ProjectGallery } from "./AppArtwork";
 import { SettingsView } from "./SettingsView";
 import { UpdateView, bytes } from "./UpdateView";
-import { WindowControls } from "./WindowControls";
+
 import { APP_VERSION, useLauncherUpdates } from "./useLauncherUpdates";
 import brandLogo from "./assets/brand/wrakeeb.png";
 import { usePackages } from "./usePackages";
-import { ProjectReleasePanel, PackageOperation } from "./ProjectRelease";
+import { PackageOperation } from "./DistributionPanel";
+import { ProjectDetails } from "./ProjectDetails";
+import { AppMenu } from "./AppMenu";
+import { listen } from "@tauri-apps/api/event";
 
 const navigation: { id: Page; label: string; icon: typeof Library }[] = [
   { id: "library", label: "Library", icon: Library },
@@ -119,8 +122,11 @@ export function App() {
   const [loadError, setLoadError] = useState<string>();
   const [removeId, setRemoveId] = useState<string>();
   const [help, setHelp] = useState(false);
+  const [legalNotices, setLegalNotices] = useState<string>();
   const [settingsSaved, setSettingsSaved] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const scanned = useRef(false);
+  const [scanning, setScanning] = useState(false);
   const contentRef = useRef<HTMLElement>(null);
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
@@ -146,6 +152,37 @@ export function App() {
       })
       .catch((error) => setLoadError(String(error)));
   }, [refresh]);
+  useEffect(() => {
+    if (!snapshot || !desktop || scanned.current) return;
+    scanned.current = true;
+    if (snapshot.store.preferences.scanOnStart ?? true) {
+      setScanning(true);
+      command("scan_installed_apps")
+        .then(refresh)
+        .catch(() => {})
+        .finally(() => setScanning(false));
+    }
+  }, [snapshot, refresh]);
+  useEffect(() => {
+    if (!desktop) return;
+    let active = true;
+    let stop: (() => void) | undefined;
+    listen<string>("shell:navigate", (event) => {
+      if (active) {
+        setPage(event.payload as Page);
+        setDetailId(undefined);
+      }
+    })
+      .then((fn) => {
+        if (active) stop = fn;
+        else fn();
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+      stop?.();
+    };
+  }, []);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(
@@ -216,34 +253,76 @@ export function App() {
         notify("Application added. Its files stay in their original location.");
     });
   }
-  function link(app: ViewApp) {
-    if (!app.available) {
-      if (app.repository) {
-        setDetailId(app.id);
-        requestAnimationFrame(() =>
-          document
-            .getElementById("release-files")
-            ?.scrollIntoView({ behavior: "auto", block: "start" }),
-        );
-        return;
-      }
+  async function scan() {
+    if (scanning) return;
+    setScanning(true);
+    try {
+      const result = await command<{
+        found: number;
+        foldersChecked: number;
+        limited: boolean;
+      }>("scan_installed_apps");
+      await refresh();
+      notify(
+        `Found ${result.found} applications. ${result.limited ? "Scan limit reached; use Locate app for other folders." : "No application files were changed."}`,
+      );
+    } catch (error) {
+      notify(String(error), true);
+    } finally {
+      setScanning(false);
+    }
+  }
+  function locate(app: ViewApp) {
+    if (!app.repository) {
       void addLocal();
       return;
     }
-    void perform(
-      app.id,
-      () => command("link_catalog_app", { id: app.id }),
-      `${app.name} added to your library.`,
-    );
+    void perform("locate", () => command("locate_catalog_app", { id: app.id }));
+  }
+  function link(app: ViewApp) {
+    if (app.missing) {
+      locate(app);
+      return;
+    }
+    if (app.available) {
+      void perform(
+        "link",
+        () => command("link_catalog_app", { id: app.id }),
+        `${app.name} added to your library.`,
+      );
+      return;
+    }
+    if (app.id === "coucou") {
+      setDetailId(app.id);
+      return;
+    }
+    if (app.repository) {
+      setDetailId(app.id);
+      void packages.downloadLatest(app.id);
+      return;
+    }
+    void addLocal();
   }
   function launch(app: ViewApp) {
-    if (app.linked)
-      void perform(
-        app.id,
-        () => command("launch_application", { id: app.linked!.id }),
-        `Asked Windows to open ${app.name}.`,
-      );
+    void perform(
+      app.id,
+      async () => {
+        const id =
+          app.linked?.id ??
+          (await command<string>("link_catalog_app", { id: app.id }));
+        await command("launch_application", { id });
+      },
+      `Asked Windows to open ${app.name}.`,
+    );
   }
+  const chooseDownload = () =>
+    void perform("download-folder", () => command("choose_download_directory"));
+  const chooseInstall = () =>
+    void perform("install-folder", () => command("choose_install_directory"));
+  const openDownloads = () =>
+    void perform("download-folder", () =>
+      command("open_storage_directory", { kind: "package" }),
+    );
   async function preferences(patch: Partial<Preferences>) {
     if (!snapshot) return;
     await perform("settings", async () => {
@@ -256,18 +335,97 @@ export function App() {
   const detected = views.filter((app) => app.available && !app.linked);
   const detail = views.find((app) => app.id === detailId);
   const removal = linked.find((app) => app.linked?.id === removeId);
-  const collection = page === "library" ? linked : views;
+  const collection =
+    page === "library"
+      ? views.filter((app) => app.linked || app.available)
+      : views;
   const displayed = filterApps(collection, query, filter, sort);
-  const isEmptyLibrary = page === "library" && linked.length === 0;
+  const isEmptyLibrary = page === "library" && collection.length === 0;
   const pageTitle = detail ? detail.name : headings[page][0];
 
   return (
     <div
-      className={`launcher ${snapshot?.store.preferences.compact ? "compact" : ""} ${snapshot?.store.preferences.reduceMotion ? "reduce-motion" : ""}`}
+      className={`launcher ${snapshot?.store.preferences.compact ? "compact" : ""} ${snapshot?.store.preferences.reduceMotion ? "reduce-motion" : ""} ${snapshot?.store.preferences.largeText ? "large-text" : ""}`}
     >
       <a href="#main" className="skip-link">
         Skip to content
       </a>
+      <AppMenu
+        back={() => setDetailId(undefined)}
+        canGoBack={!!detail}
+        menus={{
+          File: [
+            {
+              label: "Add application or script…",
+              action: () => void addLocal(),
+              disabled: !!busy,
+            },
+            {
+              label: "Scan installed apps",
+              action: () => void scan(),
+              disabled: scanning,
+            },
+            {
+              label: "Open downloads folder",
+              action: () =>
+                void perform("download-folder", () =>
+                  command("open_storage_directory", { kind: "downloads" }),
+                ),
+            },
+            {
+              label: "Hide to tray",
+              action: () => void perform("hide", () => command("hide_to_tray")),
+              disabled: !desktop,
+            },
+            {
+              label: "Exit",
+              action: () => void command("exit_launcher"),
+              disabled: !desktop,
+            },
+          ],
+          Edit: [
+            {
+              label: "Find an application",
+              action: () => searchRef.current?.focus(),
+              shortcut: "Ctrl K",
+            },
+            {
+              label: "Clear search and filters",
+              action: () => {
+                setQuery("");
+                setFilter("All apps");
+              },
+            },
+          ],
+          View: [
+            ...navigation.map((item) => ({
+              label: item.label,
+              action: () => navigate(item.id),
+            })),
+            { label: "Settings", action: () => navigate("settings") },
+            { label: "Refresh library", action: () => void refresh() },
+          ],
+          Help: [
+            {
+              label: "About, privacy and notices",
+              action: () => setHelp(true),
+            },
+            {
+              label: "Check for launcher updates",
+              action: () => {
+                navigate("updates");
+                void updates.check();
+              },
+            },
+            {
+              label: "Release history",
+              action: () =>
+                void perform("history", () => command("open_release_page")),
+              disabled: !desktop,
+            },
+          ],
+        }}
+      />
       <aside className="sidebar" aria-label="Main navigation">
         <div className="brand">
           <span className="brand-badge">
@@ -278,15 +436,12 @@ export function App() {
             <span>Launcher</span>
           </div>
         </div>
-        <div className="scope">
-          <HardDrive size={14} aria-hidden="true" />
-          <span>This computer</span>
-        </div>
         <nav>
           {navigation.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              className={`nav-item ${page === id ? "active" : ""}`}
+              aria-label={label}
+              className={`nav-item ${page === id && !(id === "library" && filter === "Favorites") ? "active" : ""}`}
               onClick={() => navigate(id)}
               aria-current={page === id ? "page" : undefined}
             >
@@ -296,8 +451,8 @@ export function App() {
           ))}
         </nav>
         <div className="sidebar-collection">
-          <span className="nav-group-title">Your collection</span>
           <button
+            aria-label="Favorites"
             className={`nav-item ${filter === "Favorites" && page === "library" ? "active" : ""}`}
             onClick={() => navigate("library", "Favorites")}
           >
@@ -314,24 +469,22 @@ export function App() {
             <Settings2 size={18} aria-hidden="true" />
             <span>Settings</span>
           </button>
-          <button className="nav-item" onClick={() => setHelp(true)}>
+          <button
+            className="nav-item"
+            aria-label="About & help"
+            onClick={() => setHelp(true)}
+          >
             <CircleHelp size={18} aria-hidden="true" />
             <span>About & help</span>
           </button>
           <div className="build-info">
             <span className="build-dot" />
-            Early access <span>{APP_VERSION}</span>
+            Version <span>{APP_VERSION}</span>
           </div>
         </div>
       </aside>
       <div className="workspace">
         <header className="topbar" data-tauri-drag-region>
-          <div className="breadcrumb">
-            Workspace <span>/</span>{" "}
-            <strong>
-              {detail ? "App details" : page[0].toUpperCase() + page.slice(1)}
-            </strong>
-          </div>
           <div className="topbar-actions">
             <label className="input search-input">
               <Search size={16} aria-hidden="true" />
@@ -359,7 +512,6 @@ export function App() {
               <span className="button-label">Add application</span>
             </button>
           </div>
-          <WindowControls />
         </header>
         <main id="main" tabIndex={-1} ref={contentRef}>
           {!desktop && (
@@ -388,156 +540,52 @@ export function App() {
               <span>Opening your library...</span>
             </div>
           ) : detail ? (
-            <>
-              <button
-                className="back-link"
-                onClick={() => setDetailId(undefined)}
-              >
-                <ArrowLeft size={15} />
-                Back to {page === "library" ? "library" : "discover"}
-              </button>
-              <div className="detail-heading">
-                <div className="detail-identity">
-                  <AppGlyph app={detail} size={48} />
-                  <div>
-                    <span className="detail-category">{detail.category}</span>
-                    <h1>{pageTitle}</h1>
-                    <p>{detail.tagline}</p>
-                  </div>
-                </div>
+            <ProjectDetails
+              key={detail.id}
+              app={detail}
+              snapshot={snapshot}
+              packages={packages}
+              busy={!!busy}
+              action={
                 <Action
                   app={detail}
-                  busy={!!busy}
+                  busy={!!busy || packages.busy}
                   launch={launch}
                   link={link}
                 />
-              </div>
-              <div className="detail-grid">
-                <div>
-                  <ProjectGallery app={detail} key={detail.id} />
-                  <section className="detail-about">
-                    <h2>About {detail.name}</h2>
-                    <p>{detail.description}</p>
-                    <ul>
-                      {detail.features.map((feature) => (
-                        <li key={feature}>
-                          <Check size={15} aria-hidden="true" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                  {detail.repository && (
-                    <ProjectReleasePanel
-                      key={detail.id}
-                      app={detail}
-                      installation={snapshot.store.installations?.find(
-                        (i) => i.catalogId === detail.id,
-                      )}
-                      packages={packages}
-                      openFolder={() =>
-                        void perform("download-folder", () =>
-                          command("open_download_directory"),
-                        )
-                      }
-                      launch={() => launch(detail)}
-                      installDirectory={snapshot.installDirectory}
-                    />
-                  )}
-                </div>
-                <aside className="detail-info">
-                  <h2>Project information</h2>
-                  <dl>
-                    <div>
-                      <dt>Platform</dt>
-                      <dd>Windows 10 / 11</dd>
-                    </div>
-                    <div>
-                      <dt>Type</dt>
-                      <dd>{detail.kind ?? "Application"}</dd>
-                    </div>
-                    <div>
-                      <dt>Distribution</dt>
-                      <dd>
-                        {detail.repository ? "GitHub Releases" : "Local file"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Installed version</dt>
-                      <dd>
-                        {snapshot.store.installations?.find(
-                          (i) => i.catalogId === detail.id,
-                        )?.version ??
-                          (detail.linked
-                            ? "Externally managed"
-                            : "Not installed")}
-                      </dd>
-                    </div>
-                  </dl>
-                  {detail.linked ? (
-                    <>
-                      <label className="path-label">Executable</label>
-                      <p className="file-path">{detail.linked.path}</p>
-                      <button
-                        className="btn btn-sm w-full"
-                        disabled={!!busy || detail.missing}
-                        onClick={() =>
-                          void perform(detail.id, () =>
-                            command("reveal_application", {
-                              id: detail.linked!.id,
-                            }),
-                          )
-                        }
-                      >
-                        <FolderOpen size={15} />
-                        Open folder
-                      </button>
-                      <button
-                        className="btn btn-sm btn-ghost w-full"
-                        disabled={!!busy}
-                        onClick={() =>
-                          void perform(detail.id, () =>
-                            command("set_favorite", {
-                              id: detail.linked!.id,
-                              favorite: !detail.linked!.favorite,
-                            }),
-                          )
-                        }
-                      >
-                        <Star
-                          size={15}
-                          fill={
-                            detail.linked.favorite ? "currentColor" : "none"
-                          }
-                        />
-                        {detail.linked.favorite
-                          ? "Remove favorite"
-                          : "Add to favorites"}
-                      </button>
-                      <button
-                        className="remove-link"
-                        onClick={() => setRemoveId(detail.linked!.id)}
-                      >
-                        Remove from library
-                      </button>
-                    </>
-                  ) : (
-                    <p className="aside-note">
-                      {detail.available
-                        ? "An existing installation was found on this computer. Add it to your library to get started."
-                        : "Choose a release file below to download. You can also link an existing app or script with Add application."}
-                    </p>
-                  )}
-                  <div className="preserve-note">
-                    <ShieldCheck size={17} />
-                    <p>
-                      Linking keeps the application and its data in their
-                      original location.
-                    </p>
-                  </div>
-                </aside>
-              </div>
-            </>
+              }
+              back={() => setDetailId(undefined)}
+              locate={() => locate(detail)}
+              launch={() => launch(detail)}
+              reveal={() =>
+                void perform("reveal", () =>
+                  command(
+                    detail.linked ? "reveal_application" : "reveal_catalog_app",
+                    { id: detail.linked?.id ?? detail.id },
+                  ),
+                )
+              }
+              favorite={() =>
+                void perform("favorite", () =>
+                  command("set_favorite", {
+                    id: detail.linked!.id,
+                    favorite: !detail.linked!.favorite,
+                  }),
+                )
+              }
+              remove={() => setRemoveId(detail.linked!.id)}
+              openRepository={() =>
+                void perform("source", () =>
+                  command("open_project_page", {
+                    id: detail.id,
+                    releases: false,
+                  }),
+                )
+              }
+              openFolder={openDownloads}
+              chooseDownload={chooseDownload}
+              chooseInstall={chooseInstall}
+            />
           ) : (
             <>
               <div className="page-heading">
@@ -549,6 +597,16 @@ export function App() {
                   <span className="collection-note">
                     {catalog.length} projects in the collection
                   </span>
+                )}
+                {(page === "library" || page === "discover") && (
+                  <button
+                    className="btn btn-sm scan-button"
+                    onClick={() => void scan()}
+                    disabled={scanning || !desktop}
+                  >
+                    <RefreshCw size={15} className={scanning ? "spin" : ""} />
+                    {scanning ? "Scanning…" : "Scan installed apps"}
+                  </button>
                 )}
                 {page === "library" && (
                   <button
@@ -789,7 +847,7 @@ export function App() {
                               </span>
                               <Action
                                 app={app}
-                                busy={!!busy}
+                                busy={!!busy || packages.busy}
                                 launch={launch}
                                 link={link}
                               />
@@ -836,6 +894,10 @@ export function App() {
               ) : page === "downloads" ? (
                 <div className="downloads-layout">
                   <PackageOperation
+                    downloadDirectory={snapshot.downloadDirectory}
+                    installDirectory={snapshot.installDirectory}
+                    chooseDownload={chooseDownload}
+                    chooseInstall={chooseInstall}
                     packages={packages}
                     openFolder={() =>
                       void perform("download-folder", () =>
@@ -1006,6 +1068,13 @@ export function App() {
                       "Application folder updated. Existing installations stay in place.",
                     )
                   }
+                  clearActivity={() =>
+                    void perform(
+                      "clear-activity",
+                      () => command("clear_activity"),
+                      "Activity history cleared. Previous-state backups are retained.",
+                    )
+                  }
                   createShortcut={() =>
                     void perform(
                       "desktop-shortcut",
@@ -1018,14 +1087,6 @@ export function App() {
             </>
           )}
         </main>
-        <footer className="statusbar">
-          <span>
-            <span className="status-dot" />
-            {desktop ? "Local library" : "Preview mode"}
-          </span>
-          <span>{linked.length} in library</span>
-          <span className="footer-right">Made by Wrakeeb</span>
-        </footer>
       </div>
       {notice && (
         <div
@@ -1106,6 +1167,31 @@ export function App() {
             Installed apps run independently. Launcher updates are managed in
             Updates. Scripts run only when you choose Run script.
           </p>
+          <h3>Privacy and rights</h3>
+          <p>
+            The launcher stores its library locally and has no advertising
+            analytics or usage telemetry. GitHub receives normal network request
+            information during release checks/downloads. Scanning is local.
+            Installed apps have their own privacy policies. Coucou artwork is
+            not bundled because redistribution permission is unconfirmed.
+          </p>
+          <details className="legal-notices">
+            <summary
+              onClick={() => {
+                if (!legalNotices)
+                  void import("../docs/THIRD-PARTY-NOTICES.txt?raw")
+                    .then((module) => setLegalNotices(module.default))
+                    .catch(() =>
+                      setLegalNotices(
+                        "The notice file could not be loaded. See the installation folder or the GitHub documentation.",
+                      ),
+                    );
+              }}
+            >
+              Third-party license notices
+            </summary>
+            <pre>{legalNotices ?? "Open to load the bundled notices."}</pre>
+          </details>
           <div className="modal-action">
             <form method="dialog">
               <button className="btn">Got it</button>
@@ -1131,13 +1217,17 @@ function Action({
   launch: (app: ViewApp) => void;
   link: (app: ViewApp) => void;
 }) {
-  return app.linked ? (
+  return app.linked || app.available ? (
     <button
       className="btn btn-sm launch-button"
-      disabled={busy || app.missing}
-      onClick={() => launch(app)}
+      disabled={busy}
+      onClick={() => (app.missing ? link(app) : launch(app))}
     >
-      {app.kind === "Script" ? "Run script" : "Launch"}{" "}
+      {app.missing
+        ? "Locate app"
+        : app.kind === "Script"
+          ? "Run script"
+          : "Launch"}{" "}
       <ArrowRight size={14} aria-hidden="true" />
     </button>
   ) : (
@@ -1153,8 +1243,12 @@ function Action({
         </>
       ) : (
         <>
-          <Link2 size={14} aria-hidden="true" />
-          {app.repository ? "View downloads" : "Choose file"}
+          <ArrowDownToLine size={14} aria-hidden="true" />
+          {app.id === "coucou"
+            ? "Source"
+            : app.repository
+              ? "Download"
+              : "Choose file"}
         </>
       )}
     </button>

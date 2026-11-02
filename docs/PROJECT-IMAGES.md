@@ -1,3 +1,13 @@
+# Project artwork — current release 0.4.0
+
+Original project imagery is bundled locally and preserved in proportion. Cards use consistent logo/name covers; galleries show authentic documentation captures with captions, thumbnail selection, previous/next and keyboard controls. No project screenshot is generated.
+
+Coucou's original icon and screenshots are excluded because permission is unconfirmed. A neutral catalog icon is used. Earlier versions discussed below describe historical assets and must not be interpreted as current redistribution permission. See RIGHTS-REVIEW.md.
+
+Brightness Control now uses its official SVG and main/settings screenshots, with the project's MIT notice preserved. PROJECT-ASSET-SOURCES.json records current files and SHA-256 hashes.
+
+## Historical implementation notes
+
 # Original project images — 0.2.0
 
 The launcher's five catalog projects now use original files from their existing project folders. Fifteen files were copied unchanged: five logos and ten screenshots or original project thumbnails. SHA-256 checksums, exact source paths and descriptive captions are in PROJECT-ASSET-SOURCES.json. The source projects were not modified.

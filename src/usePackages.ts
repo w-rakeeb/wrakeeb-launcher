@@ -19,6 +19,8 @@ export interface ProjectRelease {
   notes: string;
   assets: ReleaseAsset[];
   checkedAt: number;
+  recommendedAssetId?: number;
+  license?: string;
 }
 export interface PackageStatus {
   stage: string;
@@ -86,6 +88,7 @@ export function usePackages(refresh: () => Promise<unknown>) {
     download: (id: string, assetId: number) =>
       run("download_project_asset", { id, assetId }),
     install: () => run("install_project_package"),
+    downloadLatest: (id: string) => run("download_latest_project", { id }),
     cancel: () => command("cancel_package_download"),
   };
 }
