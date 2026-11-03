@@ -1,6 +1,6 @@
 # Wrakeeb Launcher — chat handoff and current direction
 
-Updated: 3 November 2026. Canonical project: `D:\Codex\Wrakeeb Launcher`.
+Updated: 4 November 2026. Canonical project: `D:\Codex\Wrakeeb Launcher`.
 
 ## Current follow-up — 0.6.2
 

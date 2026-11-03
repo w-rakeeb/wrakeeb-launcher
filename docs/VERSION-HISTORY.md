@@ -29,3 +29,15 @@ A rollback does not automatically undo app installations or migrate a newer libr
 For versions from 0.2.0 onward, create a separate Git worktree at the version tag, run npm ci, use the recorded Rust toolchain and Cargo.lock, then build. Do not overwrite a working checkout with unfinished changes. Third-party downloads and tool availability can still affect historical builds.
 
 Historical Coucou artwork permissions are unresolved. Current release removal does not retroactively clear archived assets. See RIGHTS-REVIEW.md.
+
+## Local refinement source snapshots
+
+The 0.5–0.6 work uses the same canonical app. Source history is preserved on GitHub; these snapshots do not imply a public binary release.
+
+| Version | Changes | Source / recovery |
+|---|---|---|
+| 0.5.0 | Equal cards, custom ordering, separate transfer folder, About scrolling and receipt-validated Recycle Bin uninstall | Commit 12839a9; local pre-consolidation backup |
+| 0.6.1 | One app with selectable Original/Claude interfaces, shared library/themes/settings and phased UI refinements | Source tag v0.6.1; Backups/2026-11-03-consolidation |
+| 0.6.2 | Visible app management, normal session-owned Close, top-left navigation control, themed tray quick access and semantic popup colors | Source tag v0.6.2; Backups/2026-11-03-v062-controls |
+
+For 0.6.2 rollback, exit the launcher, preserve the entire current data folder, then restore only the backed-up 0.6.1 executable. Do not restore an older profile over current user data. Previous 0.6.1 installer and portable ZIP remain retained beside the new delivery.

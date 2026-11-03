@@ -1,6 +1,13 @@
 import { chromium, expect } from "@playwright/test";
 import { spawn, execFileSync } from "node:child_process";
-import { mkdir, copyFile, writeFile, readFile, access } from "node:fs/promises";
+import {
+  mkdir,
+  copyFile,
+  writeFile,
+  readFile,
+  access,
+  stat,
+} from "node:fs/promises";
 import { resolve, join } from "node:path";
 import assert from "node:assert/strict";
 import { onSecondMonitor } from "./second-monitor.mjs";
@@ -39,6 +46,7 @@ execFileSync(
 );
 
 await copyFile(compiledFixture, entry);
+const fixtureBytes = (await stat(entry)).size;
 const fixture = {
   catalogId: "launcher-demo",
   version: "QA fixture",
@@ -46,8 +54,8 @@ const fixture = {
   entry,
   sha256: "a".repeat(64),
   packageName: "Isolated close fixture",
-  packageBytes: 1,
-  installedBytes: 1,
+  packageBytes: fixtureBytes,
+  installedBytes: fixtureBytes,
   installedAt: 1,
 };
 await writeFile(
@@ -86,14 +94,20 @@ await writeFile(
     preferences: prefs,
   }),
 );
-const exe = join(root, process.env.WRAKEEB_QA_INSTALLED ? "wrakeeb-launcher.exe" : "Wrakeeb Launcher.exe");
-if (!process.env.WRAKEEB_QA_INSTALLED) await copyFile(
-  resolve(
-    process.env.WRAKEEB_QA_BINARY ||
-      "src-tauri/target/debug/wrakeeb-launcher.exe",
-  ),
-  exe,
+const exe = join(
+  root,
+  process.env.WRAKEEB_QA_INSTALLED
+    ? "wrakeeb-launcher.exe"
+    : "Wrakeeb Launcher.exe",
 );
+if (!process.env.WRAKEEB_QA_INSTALLED)
+  await copyFile(
+    resolve(
+      process.env.WRAKEEB_QA_BINARY ||
+        "src-tauri/target/debug/wrakeeb-launcher.exe",
+    ),
+    exe,
+  );
 const child = spawn(exe, [], {
   cwd: root,
   stdio: "ignore",
@@ -142,9 +156,11 @@ try {
     .getByRole("button", { name: "Expand sidebar", exact: true })
     .click();
   await expect(page.locator(".launcher")).not.toHaveClass(/rail-collapsed/);
-  await page.getByRole("button", {name:"Application menu",exact:true}).click();
+  await page
+    .getByRole("button", { name: "Application menu", exact: true })
+    .click();
   await page.locator(".navigation-menu summary").click();
-  await page.screenshot({path:join(root,"navigation-menu.png")});
+  await page.screenshot({ path: join(root, "navigation-menu.png") });
   await page.keyboard.press("Escape");
   await assert.rejects(
     call("close_launched_application", { id: "untracked" }),
@@ -192,10 +208,13 @@ try {
     (await call("get_running_apps")).some((a) => a.id === "qa-fixture"),
   );
   await page.screenshot({ path: join(root, "application-controls.png") });
-  await call("remove_application",{id:"qa-fixture"});
-  assert.equal((await call("get_snapshot")).store.apps.length,0);
-  await assert.rejects(call("uninstall_project",{id:"launcher-demo"}),/Close the running/);
-  assert.equal((await call("get_running_apps"))[0].name,"Launcher Demo");
+  await call("remove_application", { id: "qa-fixture" });
+  assert.equal((await call("get_snapshot")).store.apps.length, 0);
+  await assert.rejects(
+    call("uninstall_project", { id: "launcher-demo" }),
+    /Close the running/,
+  );
+  assert.equal((await call("get_running_apps"))[0].name, "Launcher Demo");
 
   await call("show_tray_panel", { x: -550, y: 1100 });
   let tray;
@@ -258,6 +277,16 @@ try {
   const snapshot = await call("get_snapshot");
   assert.equal(snapshot.store.apps.length, 0);
   assert.equal(snapshot.store.installations.length, 0);
+  await page
+    .getByRole("button", { name: "Close launcher", exact: true })
+    .click()
+    .catch(() => {});
+  for (let i = 0; i < 60 && child.exitCode === null; i++) await pause(100);
+  assert.equal(
+    child.exitCode,
+    0,
+    "Main close must exit even after creating the tray panel",
+  );
   await writeFile(
     join(root, "report.json"),
     JSON.stringify(
@@ -272,6 +301,8 @@ try {
         sidebarInMenu: true,
         uninstallVisible: true,
         runningUninstallBlocked: true,
+        runningUninstallBlockedAfterUnlink: true,
+        mainCloseExitsWithTrayPanel: true,
         gracefulClose: true,
         appMayCancelClose: true,
         noForceTermination: true,
@@ -282,16 +313,6 @@ try {
       null,
       2,
     ),
-  );
-  await page
-    .getByRole("button", { name: "Close launcher", exact: true })
-    .click()
-    .catch(() => {});
-  for (let i = 0; i < 60 && child.exitCode === null; i++) await pause(100);
-  assert.equal(
-    child.exitCode,
-    0,
-    "Main close must exit even after creating the tray panel",
   );
   console.log("0.6.2 native controls passed on monitor 2.");
 } finally {
