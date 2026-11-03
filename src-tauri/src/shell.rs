@@ -1,6 +1,7 @@
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
+use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
 pub fn show_launcher(app: tauri::AppHandle) -> Result<(), String> {
@@ -136,4 +137,55 @@ pub async fn create_application_shortcut(id: String, app: tauri::AppHandle) -> R
         if !process.status().map_err(|e| e.to_string())?.success() { return Err("Windows could not create the shortcut, or that name already exists.".into()); }
         Ok(())
     }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn open_launcher_data(app: tauri::AppHandle) -> Result<(), String> {
+    let library = app.state::<crate::Library>();
+    let directory = library.file.parent().ok_or("Data folder unavailable")?;
+    let directory = crate::local_directory(directory)?;
+    std::process::Command::new(crate::windows_tool("explorer.exe")?).arg(directory).spawn().map_err(|e| e.to_string())?;
+    Ok(())
+}
+#[derive(serde::Serialize, serde::Deserialize)]
+struct PreferencesFile { format: String, preferences: crate::Preferences }
+#[tauri::command]
+pub async fn export_preferences(app: tauri::AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(file) = app.dialog().file().set_parent(&app.get_webview_window("main").ok_or("Launcher window unavailable")?).set_title("Export launcher preferences").add_filter("JSON preferences", &["json"]).set_file_name("Wrakeeb-preferences.json").blocking_save_file() else { return Ok(()); };
+        let path = file.into_path().map_err(|_| "Choose a local file")?;
+        crate::local_directory(path.parent().ok_or("Choose a local folder")?)?;
+        let library = app.state::<crate::Library>();
+        let preferences = library.store.lock().map_err(|_| "Library is busy")?.preferences.clone();
+        crate::atomic_json(&path, &PreferencesFile { format: "wrakeeb-preferences-v1".into(), preferences })
+    }).await.map_err(|e| e.to_string())?
+}
+#[tauri::command]
+pub async fn import_preferences(app: tauri::AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(file) = app.dialog().file().set_parent(&app.get_webview_window("main").ok_or("Launcher window unavailable")?).set_title("Import launcher preferences (replaces preferences only)").add_filter("JSON preferences", &["json"]).blocking_pick_file() else { return Ok(()); };
+        let path = file.into_path().map_err(|_| "Choose a local file")?;
+        if std::fs::metadata(&path).map_err(|e| e.to_string())?.len() > 131072 { return Err("Preference file is too large.".into()); }
+        let file: PreferencesFile = serde_json::from_slice(&std::fs::read(&path).map_err(|e| e.to_string())?).map_err(|_| "This is not a valid launcher preferences export")?;
+        if file.format != "wrakeeb-preferences-v1" { return Err("This preferences format is not supported.".into()); }
+        crate::validate_preferences(&file.preferences)?;
+        crate::mutate(&app.state::<crate::Library>(), |store| { store.preferences = file.preferences; Ok(()) })
+    }).await.map_err(|e| e.to_string())?
+}
+#[tauri::command]
+pub fn storage_capacity(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    let library = app.state::<crate::Library>();
+    let mut path = crate::packages::install_directory(&library)?;
+    while !path.exists() { path = path.parent().ok_or("Drive is unavailable")?.to_path_buf(); }
+    let path = crate::local_directory(&path)?;
+    #[cfg(windows)] {
+        use std::os::windows::ffi::OsStrExt;
+        #[link(name = "kernel32")]
+        extern "system" { fn GetDiskFreeSpaceExW(path: *const u16, available: *mut u64, total: *mut u64, free: *mut u64) -> i32; }
+        let wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+        let (mut available, mut total, mut free) = (0u64, 0u64, 0u64);
+        if unsafe { GetDiskFreeSpaceExW(wide.as_ptr(), &mut available, &mut total, &mut free) } == 0 { return Err("Windows could not read available disk space.".into()); }
+        return Ok(serde_json::json!({ "available": available, "total": total }));
+    }
+    #[cfg(not(windows))] { let _ = path; Err("Disk capacity is available on Windows.".into()) }
 }

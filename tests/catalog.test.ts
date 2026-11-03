@@ -75,3 +75,10 @@ it("installed/linked filters and size/addition sorts use real app records", () =
   expect(filterApps(apps, "", "Installed", "name").some(a => a.id === "two")).toBe(false);
   expect(filterApps(apps, "", "Not installed", "name").every(a => !a.linked && !a.available)).toBe(true);
 });
+
+import { accessibleAccent, contrast } from "../src/preferences";
+it("custom and preset accents retain AA text contrast against each theme", () => {
+  for (const [theme,background] of [["discord","#1d1f23"],["graphite","#242629"],["midnight","#1c2633"],["obsidian","#101113"],["light","#ffffff"]]) {
+    for (const requested of ["#ffffff","#000000","#4055d6","#ed776a","#087f72"]) expect(contrast(accessibleAccent(requested, theme),background)).toBeGreaterThanOrEqual(4.5);
+  }
+});

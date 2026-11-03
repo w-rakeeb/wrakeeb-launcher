@@ -524,8 +524,7 @@ fn remove_application(id: String, library: State<Library>) -> Result<(), String>
         Ok(())
     })
 }
-#[tauri::command]
-fn save_preferences(preferences: Preferences, library: State<Library>) -> Result<(), String> {
+fn validate_preferences(preferences: &Preferences) -> Result<(), String> {
     if !["discord", "wrakeeb", "slate", "light", "obsidian", "midnight", "graphite"].contains(&preferences.theme.as_str())
         || !["default", "blue", "teal", "red", "amber"].contains(&preferences.accent.as_str())
     {
@@ -546,6 +545,11 @@ fn save_preferences(preferences: Preferences, library: State<Library>) -> Result
     if let Some(path) = &preferences.install_directory {
         local_directory(Path::new(path))?;
     }
+    Ok(())
+}
+#[tauri::command]
+fn save_preferences(preferences: Preferences, library: State<Library>) -> Result<(), String> {
+    validate_preferences(&preferences)?;
     mutate(&library, |store| {
         store.preferences = preferences;
         Ok(())
@@ -640,6 +644,10 @@ fn main() {
             shell::hide_to_tray,
             shell::show_launcher,
             shell::create_application_shortcut,
+            shell::export_preferences,
+            shell::import_preferences,
+            shell::storage_capacity,
+            shell::open_launcher_data,
             shell::exit_launcher,
             shell::get_shell_status,
             shell::open_storage_directory,
@@ -818,6 +826,14 @@ mod tests {
             .join(uuid::Uuid::new_v4().to_string());
         fs::create_dir_all(&root).unwrap();
         root
+    }
+    #[test]
+    fn legacy_preferences_default_new_fields_without_losing_existing_choices() {
+        let prefs: Preferences = serde_json::from_str(r#"{"theme":"slate","compact":true,"closeToTray":true}"#).unwrap();
+        assert_eq!(prefs.theme, "slate"); assert!(prefs.compact && prefs.close_to_tray);
+        assert_eq!(prefs.card_size, 260); assert_eq!(prefs.library_view, "grid"); assert!(prefs.notifications);
+        assert!(validate_preferences(&prefs).is_ok());
+        let mut invalid = prefs; invalid.custom_accent = Some("#oops!!".into()); assert!(validate_preferences(&invalid).is_err());
     }
     #[test]
     fn invalid_executable_and_relative_paths_are_rejected() {

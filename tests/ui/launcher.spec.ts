@@ -164,13 +164,13 @@ test("desktop bridge: linked app favorites, launch errors, removal, settings and
   await page.getByRole("button", { name: "Launch", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("file is missing");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByLabel("Color scheme").selectOption("wrakeeb");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "wrakeeb");
-  await page.getByLabel("Color scheme").selectOption("discord");
+  await page.getByRole("button", { name: "Graphite theme", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "graphite");
+  await page.getByRole("button", { name: "Wrakeeb Dark theme", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "discord");
   await page.getByRole("checkbox", { name: /Compact library/ }).check();
   await expect(page.locator(".launcher")).toHaveClass(/compact/);
-  await expect(page.getByRole("status")).toContainText("Changes saved");
+  await expect(page.getByRole("status")).toContainText("Preferences saved.");
   await page.getByRole("button", { name: "Library", exact: true }).click();
   await page.getByRole("button", { name: "StickyN", exact: true }).click();
   await page.getByLabel("Project options", { exact: true }).click();

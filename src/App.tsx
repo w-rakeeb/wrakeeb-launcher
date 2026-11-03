@@ -38,7 +38,8 @@ import {
 } from "./catalog";
 import { command, desktop, getSnapshot, savePreferences } from "./bridge";
 import { AppArtwork, AppGlyph, ProjectGallery } from "./AppArtwork";
-import { SettingsView } from "./SettingsView";
+const SettingsView = lazy(() => import("./SettingsView").then(module => ({ default: module.SettingsView })));
+import { accessibleAccent, luminance } from "./preferences";
 import { UpdateView, bytes } from "./UpdateView";
 
 import { APP_VERSION, useLauncherUpdates } from "./useLauncherUpdates";
@@ -118,14 +119,13 @@ export function App() {
     };
     for (const token of ["--color-primary", "--color-accent"]) {
       if (customAccent || colors[accent])
-        document.documentElement.style.setProperty(token, customAccent || colors[accent]);
+        document.documentElement.style.setProperty(token, accessibleAccent(customAccent || colors[accent], snapshot?.store.preferences.theme ?? "discord"));
       else document.documentElement.style.removeProperty(token);
     }
     for (const token of ["--color-primary-content", "--color-accent-content"]) {
       if (customAccent || colors[accent]) {
-        const color = customAccent || colors[accent];
-        const luminance = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16) / 255).map(c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4).reduce((v, c, i) => v + c * [.2126, .7152, .0722][i], 0);
-        document.documentElement.style.setProperty(token, luminance > .179 ? "#111318" : "#ffffff");
+        const color = accessibleAccent(customAccent || colors[accent], snapshot?.store.preferences.theme ?? "discord");
+        document.documentElement.style.setProperty(token, luminance(color) > .179 ? "#111318" : "#ffffff");
       }
       else document.documentElement.style.removeProperty(token);
     }
@@ -152,6 +152,9 @@ export function App() {
     if (uninstallId) uninstallDialog.current?.showModal();
     else uninstallDialog.current?.close();
   }, [uninstallId]);
+  useEffect(() => { if (snapshot) setList(snapshot.store.preferences.libraryView === "list"); }, [snapshot?.store.preferences.libraryView]);
+  useEffect(() => { if (snapshot) setCardSize(snapshot.store.preferences.cardSize ?? 260); }, [snapshot?.store.preferences.cardSize]);
+  useEffect(() => { if (snapshot) setFilter(snapshot.store.preferences.libraryFilter ?? "All apps"); }, [snapshot?.store.preferences.libraryFilter]);
   const [detailId, setDetailId] = useState<string>();
   const [busy, setBusy] = useState<string>();
   const [notice, setNotice] = useState<{ text: string; error: boolean }>();
@@ -366,7 +369,11 @@ export function App() {
     if (!snapshot) return;
     await perform("settings", async () => {
       await savePreferences({ ...snapshot.store.preferences, ...patch });
+      if (patch.libraryView) setList(patch.libraryView === "list");
+      if (patch.libraryFilter) setFilter(patch.libraryFilter);
+      if (patch.cardSize) setCardSize(patch.cardSize);
       setSettingsSaved(true);
+      notify("Preferences saved.");
     });
   }
   const views = snapshot ? appViews(snapshot) : [];
@@ -1099,7 +1106,7 @@ export function App() {
               ) : page === "activity" ? (
                 <Suspense fallback={<div className="loading-state" role="status">Opening activity…</div>}><ActivityTimeline activity={snapshot.store.activity} openLibrary={() => navigate("library")} /></Suspense>
               ) : (
-                <SettingsView
+                <Suspense fallback={<div className="loading-state" role="status">Opening settings…</div>}><SettingsView
                   snapshot={snapshot}
                   busy={!!busy}
                   saved={settingsSaved}
@@ -1140,7 +1147,8 @@ export function App() {
                       "Desktop shortcut created.",
                     )
                   }
-                />
+                  utility={(name) => void perform(name, () => command(name))}
+                /></Suspense>
               )}
             </>
           )}
@@ -1155,7 +1163,7 @@ export function App() {
         {contextApp.linked && <button role="menuitem" onClick={() => { setRemoveId(contextApp.linked!.id); setContext(undefined); }}>Remove from library…</button>}
         {contextApp.installed && <button role="menuitem" className="text-error" disabled={packages.busy} onClick={() => { setUninstallId(contextApp.id); setContext(undefined); }}>Uninstall application…</button>}
       </div>}
-      {notice && (
+      {notice && (notice.error || snapshot?.store.preferences.notifications !== false || notice.text === "Preferences saved.") && (
         <div
           className={`notification ${notice.error ? "is-error" : ""}`}
           role={notice.error ? "alert" : "status"}

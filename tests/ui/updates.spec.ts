@@ -22,8 +22,8 @@ test("download folder, theme and update results stay reactive and stale install 
     } };
   });
   await page.goto("/#settings");
-  await page.getByLabel("Color scheme").selectOption("wrakeeb");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "wrakeeb");
+  await page.getByRole("button", { name: "Graphite theme", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "graphite");
   await page.getByRole("tab", { name: "Downloads", exact: true }).click();
   await page.getByRole("button", { name: "Choose folder", exact: true }).click();
   await expect(page.locator(".download-location")).toHaveText("D:/Chosen downloads");
