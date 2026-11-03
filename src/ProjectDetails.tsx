@@ -26,6 +26,7 @@ export function ProjectDetails({
   reveal,
   favorite,
   remove,
+  uninstall,
   openRepository,
   openFolder,
   chooseDownload,
@@ -42,6 +43,7 @@ export function ProjectDetails({
   reveal: () => void;
   favorite: () => void;
   remove: () => void;
+  uninstall: () => void;
   openRepository: () => void;
   openFolder: () => void;
   chooseDownload: () => void;
@@ -206,6 +208,7 @@ export function ProjectDetails({
                 <button onClick={reveal}>Open application folder</button>
               </li>
             )}
+            {app.installed && <li><button className="text-error" disabled={busy || packages.busy} onClick={uninstall}>Uninstall application…</button></li>}
             {app.linked && (
               <>
                 <li>

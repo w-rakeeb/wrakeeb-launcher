@@ -21,6 +21,7 @@ import {
   Link2,
   RefreshCw,
   CircleHelp,
+  GripVertical,
 } from "lucide-react";
 import {
   catalog,
@@ -116,6 +117,14 @@ export function App() {
   const [filter, setFilter] = useState("All apps");
   const [sort, setSort] = useState("name");
   const [list, setList] = useState(false);
+  const [dragId, setDragId] = useState<string>();
+  const [dropId, setDropId] = useState<string>();
+  const [uninstallId, setUninstallId] = useState<string>();
+  const uninstallDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (uninstallId) uninstallDialog.current?.showModal();
+    else uninstallDialog.current?.close();
+  }, [uninstallId]);
   const [detailId, setDetailId] = useState<string>();
   const [busy, setBusy] = useState<string>();
   const [notice, setNotice] = useState<{ text: string; error: boolean }>();
@@ -316,7 +325,10 @@ export function App() {
     );
   }
   const chooseDownload = () =>
-    void perform("download-folder", () => command("choose_download_directory"));
+    void perform("download-folder", async () => {
+      const directory = await command<string | null>("choose_download_directory", { temporary: true });
+      if (directory) packages.setDownloadDirectory(directory);
+    });
   const chooseInstall = () =>
     void perform("install-folder", () => command("choose_install_directory"));
   const openDownloads = () =>
@@ -339,7 +351,19 @@ export function App() {
     page === "library"
       ? views.filter((app) => app.linked || app.available)
       : views;
-  const displayed = filterApps(collection, query, filter, sort);
+  const effectiveSort = snapshot?.store.preferences.librarySort ?? sort;
+  const displayed = filterApps(collection, query, filter, effectiveSort, snapshot?.store.preferences.customOrder);
+  async function reorder(source: string, target: string) {
+    if (source === target || !snapshot || busy) return;
+    const order = filterApps(views, "", "All apps", effectiveSort, snapshot.store.preferences.customOrder).map(a => a.id);
+    const moved = order.indexOf(source);
+    const destination = order.indexOf(target);
+    if (moved < 0 || destination < 0) return;
+    order.splice(moved, 1);
+    order.splice(destination, 0, source);
+    await preferences({ customOrder: order, librarySort: "custom" });
+    notify("Custom order saved.");
+  }
   const isEmptyLibrary = page === "library" && collection.length === 0;
   const pageTitle = detail ? detail.name : headings[page][0];
 
@@ -543,7 +567,7 @@ export function App() {
             <ProjectDetails
               key={detail.id}
               app={detail}
-              snapshot={snapshot}
+              snapshot={{ ...snapshot, downloadDirectory: packages.downloadDirectory ?? snapshot.downloadDirectory }}
               packages={packages}
               busy={!!busy}
               action={
@@ -574,6 +598,7 @@ export function App() {
                 )
               }
               remove={() => setRemoveId(detail.linked!.id)}
+              uninstall={() => setUninstallId(detail.id)}
               openRepository={() =>
                 void perform("source", () =>
                   command("open_project_page", {
@@ -663,11 +688,12 @@ export function App() {
                           <span className="sr-only">Sort applications</span>
                           <select
                             className="select select-sm"
-                            value={sort}
-                            onChange={(event) => setSort(event.target.value)}
+                            value={effectiveSort}
+                            onChange={(event) => { setSort(event.target.value); if (desktop) void preferences({ librarySort: event.target.value }); }}
                           >
                             <option value="name">Name</option>
                             <option value="recent">Recently used</option>
+                            <option value="custom">Custom order</option>
                           </select>
                           <ChevronDown size={12} aria-hidden="true" />
                         </label>
@@ -785,7 +811,14 @@ export function App() {
                       data-count={displayed.length}
                     >
                       {displayed.map((app) => (
-                        <article className="app-item" key={app.id}>
+                        <article className={`app-item ${dragId === app.id ? "is-dragging" : ""} ${dropId === app.id ? "is-drop-target" : ""}`} key={app.id}
+                          onDragOver={event => { if (dragId && dragId !== app.id) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropId(app.id); } }}
+                          onDrop={event => { event.preventDefault(); if (dragId) void reorder(dragId, app.id); setDragId(undefined); setDropId(undefined); }}>
+                          {page === "library" && <button className="reorder-handle" draggable={desktop && !busy} disabled={!desktop || !!busy}
+                            aria-label={`Reorder ${app.name}`} title="Drag to reorder · Alt + Arrow keys to move"
+                            onDragStart={event => { setDragId(app.id); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", app.id); }}
+                            onDragEnd={() => { setDragId(undefined); setDropId(undefined); }}
+                            onKeyDown={event => { if (event.altKey && ["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown"].includes(event.key)) { event.preventDefault(); const index = displayed.findIndex(a => a.id === app.id); const target = displayed[index + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1)]; if (target) void reorder(app.id, target.id); } }}><GripVertical size={16} /></button>}
                           <button
                             className="art-button"
                             onClick={() => setDetailId(app.id)}
@@ -894,7 +927,7 @@ export function App() {
               ) : page === "downloads" ? (
                 <div className="downloads-layout">
                   <PackageOperation
-                    downloadDirectory={snapshot.downloadDirectory}
+                    downloadDirectory={packages.downloadDirectory ?? snapshot.downloadDirectory}
                     installDirectory={snapshot.installDirectory}
                     chooseDownload={chooseDownload}
                     chooseInstall={chooseInstall}
@@ -961,22 +994,18 @@ export function App() {
                     )}
                   </section>
                   <section className="download-info">
-                    <h2>Your download folder</h2>
-                    <p className="file-path">{snapshot.downloadDirectory}</p>
+                    <h2>Download destination</h2>
+                    <p className="file-path">{packages.downloadDirectory ?? snapshot.downloadDirectory}</p>
+                    <p className="setting-help">{packages.downloadDirectory ? "One-time folder · resets after this download" : "Using your default folder from Settings"}</p>
                     <button
                       className="btn btn-sm"
                       disabled={!desktop || !!busy}
-                      onClick={() =>
-                        void perform(
-                          "download-folder",
-                          () => command("choose_download_directory"),
-                          "Download location saved.",
-                        )
-                      }
+                      onClick={chooseDownload}
                     >
                       <FolderOpen size={15} />
                       Choose folder
                     </button>
+                    {packages.downloadDirectory && <button className="btn btn-sm btn-ghost" onClick={() => packages.setDownloadDirectory(undefined)}>Use default folder</button>}
                     <div className="download-guidance">
                       <h2>Verified before install</h2>
                       <p>
@@ -1075,6 +1104,7 @@ export function App() {
                       "Activity history cleared. Previous-state backups are retained.",
                     )
                   }
+                  uninstallLauncher={() => void perform("uninstall-launcher", () => command("open_windows_uninstall"), "Windows Installed apps opened. Choose Wrakeeb Launcher to uninstall. Portable copies can be removed from their folder after exiting.")}
                   createShortcut={() =>
                     void perform(
                       "desktop-shortcut",
@@ -1140,13 +1170,23 @@ export function App() {
           <button>Close</button>
         </form>
       </dialog>
+      <dialog ref={uninstallDialog} className="modal" onClose={() => setUninstallId(undefined)} aria-labelledby="uninstall-title">
+        <div className="modal-box">
+          <h2 id="uninstall-title">Uninstall {views.find(a => a.id === uninstallId)?.name}?</h2>
+          <p>The launcher-installed version folder will move to the Recycle Bin and its library link will be removed. Close the application first. Downloads, older versions and separately stored profiles stay on your PC. Data saved inside this version folder moves with it.</p>
+          <div className="modal-action"><form method="dialog"><button className="btn">Cancel</button></form>
+            <button className="btn btn-error" disabled={!!busy || packages.busy} onClick={() => { const id = uninstallId; setUninstallId(undefined); if (id) void perform("uninstall", () => command("uninstall_project", { id }), "Application uninstalled. Its version folder is recoverable from the Recycle Bin."); }}>Uninstall application</button>
+          </div>
+        </div><form method="dialog" className="modal-backdrop"><button>Close</button></form>
+      </dialog>
       <dialog
         ref={helpDialog}
         className="modal"
         onClose={() => setHelp(false)}
         aria-labelledby="help-title"
       >
-        <div className="modal-box">
+        <div className="modal-box about-dialog" tabIndex={0}>
+          <form method="dialog" className="about-close"><button className="btn btn-sm btn-ghost" aria-label="Close About"><X size={18} /></button></form>
           <h2 id="help-title">Wrakeeb Launcher</h2>
           <p>Applications, scripts and utilities. Version {APP_VERSION}.</p>
           <h3>Getting started</h3>

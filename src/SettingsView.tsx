@@ -5,6 +5,7 @@ import {
   Palette,
   Settings2,
   HardDrive,
+  Check,
 } from "lucide-react";
 import type { Preferences, Snapshot } from "./catalog";
 import { desktop } from "./bridge";
@@ -22,6 +23,7 @@ export function SettingsView({
   chooseInstallDirectory,
   createShortcut,
   clearActivity,
+  uninstallLauncher,
 }: {
   snapshot: Snapshot;
   busy: boolean;
@@ -34,12 +36,14 @@ export function SettingsView({
   chooseInstallDirectory: () => void;
   createShortcut: () => void;
   clearActivity: () => void;
+  uninstallLauncher: () => void;
 }) {
   const [tab, setTab] = useState("appearance");
   const [confirmClear, setConfirmClear] = useState(false);
   const prefs = snapshot.store.preferences;
   return (
     <div className="settings-content">
+      <div className="settings-intro"><h2>Your launcher. Your workspace.</h2><p>Fine-tune the look, choose where things live, and stay in control.</p></div>
       <div
         className="tabs tabs-box settings-tabs"
         role="tablist"
@@ -102,7 +106,21 @@ export function SettingsView({
                 <h2>Theme</h2>
                 <p>Choose the interface palette and accent color.</p>
               </div>
-              <div className="settings-panel">
+              <div className="settings-panel appearance-panel">
+                <div className="theme-gallery" role="group" aria-label="Theme previews">
+                  {[
+                    ["discord", "Discord", "Familiar charcoal", "#17181c", "#25262c", "#a5adff"],
+                    ["obsidian", "Obsidian", "Deep neutral black", "#090a0c", "#15171a", "#e5e7eb"],
+                    ["midnight", "Midnight", "Dark ocean blue", "#0b111c", "#192334", "#9abfff"],
+                    ["graphite", "Graphite", "Soft smoke grey", "#1b1c1e", "#2b2d30", "#d8c3a6"],
+                    ["wrakeeb", "Charcoal", "Original warm dark", "#171818", "#303232", "#dbb383"],
+                    ["slate", "Slate", "Cool blue grey", "#17212d", "#2d3b4e", "#adcbff"],
+                    ["light", "Light", "A brighter workspace", "#f4f6f9", "#e1e5ec", "#4055d6"],
+                  ].map(([id, name, description, ground, surface, accent]) => <button key={id} className={`theme-choice ${prefs.theme === id ? "selected" : ""}`} aria-label={`${name} theme`} aria-pressed={prefs.theme === id} disabled={busy || !desktop} onClick={() => change({ theme: id as Preferences["theme"] })}>
+                    <span className="theme-preview" style={{ background: ground, color: accent }}><i style={{ background: surface }} /><b /><span><i style={{ background: surface }} /><i style={{ background: surface }} /><i style={{ background: surface }} /></span></span>
+                    <strong>{name}<span>{prefs.theme === id ? <Check size={14} aria-hidden="true" /> : null}</span></strong><small>{description}</small>
+                  </button>)}
+                </div>
                 <label className="theme-select-label" htmlFor="theme-choice">
                   Color scheme
                 </label>
@@ -121,6 +139,9 @@ export function SettingsView({
                   <option value="wrakeeb">Original charcoal</option>
                   <option value="slate">Slate</option>
                   <option value="light">Corporate light</option>
+                  <option value="obsidian">Obsidian · Deep black</option>
+                  <option value="midnight">Midnight · Dark blue</option>
+                  <option value="graphite">Graphite · Smoke grey</option>
                 </select>
                 <label className="theme-select-label" htmlFor="accent-choice">
                   Accent color
@@ -448,6 +469,10 @@ export function SettingsView({
                   task is added.
                 </p>
               </div>
+            </section>
+            <section className="settings-section">
+              <div><h2>Uninstall launcher</h2><p>Manage this installation through Windows.</p></div>
+              <div className="settings-panel data-panel"><strong>Remove Wrakeeb Launcher</strong><p>Open Windows Installed apps, then select Wrakeeb Launcher → Uninstall. For a portable copy, exit the launcher and remove its folder. Independently installed applications remain in their own folders.</p><button className="btn btn-sm" disabled={busy || !desktop} onClick={uninstallLauncher}>Open Windows uninstall settings</button></div>
             </section>
             <section className="settings-section">
               <div>

@@ -29,3 +29,12 @@ Applied local daisyUI, UI/UX Pro Max and Taste app-screen guidance: accessible c
 - GitHub privacy policy: https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement — disclosed GitHub network requests.
 
 No claim of superiority or a complete legal compliance certification is made.
+
+
+## 0.5.0 review — 3 November 2026
+
+Reviewed Steam Library (https://store.steampowered.com/libraryupdate/), Epic's launcher showcase (https://launcher.epicgames.com/), EA's application (https://www.ea.com/ea-app) and download workflow (https://help.ea.com/en/articles/platforms/download-and-play-ea-app-games/). Adaptations: fixed-width shelves, recognizable product imagery, consistent card actions, distinct appearance/storage settings, and separation of a download destination from the global default.
+
+GitHub references reviewed: Heroic (https://github.com/Heroic-Games-Launcher/HeroicGamesLauncher) and the design engineering workflow (https://github.com/ryktara/design-engineering-skill). Used as interaction/process references; no application code, dependencies, or remote skills were installed. Existing local Taste, UI/UX Pro Max, and daisyUI guidance informed the implementation.
+
+The original native Segoe typeface, brand, stack and existing assets were retained. The Taste app sheet's light palette was intentionally mapped onto the existing dark brand. Its automated shadow warning is a transparent daisyUI active-tab shadow (all alpha values zero), not a visible glow. Theme preview controls intentionally show the palette they select.

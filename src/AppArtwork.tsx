@@ -44,10 +44,11 @@ export function AppGlyph({
 }
 
 export function AppArtwork({ app }: { app: CatalogApp }) {
+  const [failed, setFailed] = useState(false);
+  const preview = app.images?.[0];
   return (
-    <div className="app-art project-art project-brand-cover">
-      <AppGlyph app={app} size={82} />
-      <strong>{app.name}</strong>
+    <div className={`app-art project-art project-brand-cover ${preview && !failed ? "has-preview" : ""}`}>
+      {preview && !failed ? <><img className="card-preview" src={preview.src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} /><span className="cover-app-mark"><AppGlyph app={app} size={30} /></span></> : <><AppGlyph app={app} size={76} /><strong>{app.name}</strong></>}
     </div>
   );
 }

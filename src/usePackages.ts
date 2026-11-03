@@ -46,6 +46,7 @@ const empty: PackageStatus = {
 export function usePackages(refresh: () => Promise<unknown>) {
   const [status, setStatus] = useState(empty);
   const [busy, setBusy] = useState(false);
+  const [downloadDirectory, setDownloadDirectory] = useState<string>();
   useEffect(() => {
     if (!desktop) return;
     let active = true;
@@ -72,6 +73,7 @@ export function usePackages(refresh: () => Promise<unknown>) {
     async (name: string, args?: Record<string, unknown>) => {
       setBusy(true);
       try {
+        if (name.startsWith("download_")) setDownloadDirectory(undefined);
         setStatus(await command<PackageStatus>(name, args));
         await refresh();
       } catch (error) {
@@ -86,9 +88,11 @@ export function usePackages(refresh: () => Promise<unknown>) {
     status,
     busy,
     download: (id: string, assetId: number) =>
-      run("download_project_asset", { id, assetId }),
+      run("download_project_asset", { id, assetId, directory: downloadDirectory }),
     install: () => run("install_project_package"),
-    downloadLatest: (id: string) => run("download_latest_project", { id }),
+    downloadLatest: (id: string) => run("download_latest_project", { id, directory: downloadDirectory }),
+    downloadDirectory,
+    setDownloadDirectory,
     cancel: () => command("cancel_package_download"),
   };
 }

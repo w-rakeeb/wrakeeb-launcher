@@ -193,7 +193,9 @@ export interface Preferences {
   compact: boolean;
   reduceMotion: boolean;
   rememberPage: boolean;
-  theme?: "discord" | "wrakeeb" | "slate" | "light";
+  theme?: "discord" | "wrakeeb" | "slate" | "light" | "obsidian" | "midnight" | "graphite";
+  customOrder?: string[];
+  librarySort?: string;
   accent?: "default" | "blue" | "teal" | "red" | "amber";
   closeToTray?: boolean;
   minimizeToTray?: boolean;
@@ -296,6 +298,7 @@ export function filterApps(
   query: string,
   filter: string,
   sort: string,
+  order: string[] = [],
 ): ViewApp[] {
   const term = query.trim().toLocaleLowerCase();
   return apps
@@ -311,7 +314,10 @@ export function filterApps(
             : app.category === filter)),
     )
     .sort((a, b) =>
-      sort === "recent"
+      sort === "custom"
+        ? (order.indexOf(a.id) < 0 ? order.length : order.indexOf(a.id)) -
+          (order.indexOf(b.id) < 0 ? order.length : order.indexOf(b.id))
+        : sort === "recent"
         ? (b.linked?.lastLaunched ?? b.linked?.addedAt ?? 0) -
             (a.linked?.lastLaunched ?? a.linked?.addedAt ?? 0) ||
           a.name.localeCompare(b.name)

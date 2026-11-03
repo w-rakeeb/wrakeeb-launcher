@@ -44,6 +44,8 @@ struct Preferences {
     scan_downloads: bool,
     record_activity: bool,
     large_text: bool,
+    custom_order: Vec<String>,
+    library_sort: String,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -62,6 +64,8 @@ impl Default for Preferences {
             scan_downloads: true,
             record_activity: true,
             large_text: false,
+            custom_order: vec![],
+            library_sort: "name".into(),
         }
     }
 }
@@ -506,10 +510,13 @@ fn remove_application(id: String, library: State<Library>) -> Result<(), String>
 }
 #[tauri::command]
 fn save_preferences(preferences: Preferences, library: State<Library>) -> Result<(), String> {
-    if !["discord", "wrakeeb", "slate", "light"].contains(&preferences.theme.as_str())
+    if !["discord", "wrakeeb", "slate", "light", "obsidian", "midnight", "graphite"].contains(&preferences.theme.as_str())
         || !["default", "blue", "teal", "red", "amber"].contains(&preferences.accent.as_str())
     {
         return Err("Choose a supported theme.".into());
+    }
+    if !["name", "recent", "custom"].contains(&preferences.library_sort.as_str()) || preferences.custom_order.len() > 10000 {
+        return Err("Choose a supported library order.".into());
     }
     if let Some(path) = &preferences.download_directory {
         local_directory(Path::new(path))?;
@@ -617,6 +624,8 @@ fn main() {
             packages::get_project_release,
             packages::get_package_status,
             packages::download_project_asset,
+            packages::uninstall_project,
+            open_windows_uninstall,
             packages::install_project_package,
             packages::cancel_package_download,
             packages::choose_install_directory,
@@ -687,7 +696,7 @@ pub fn local_directory(path: &Path) -> Result<PathBuf, String> {
     Ok(PathBuf::from(text.strip_prefix(r"\\?\").unwrap_or(&text)))
 }
 #[tauri::command]
-async fn choose_download_directory(app: tauri::AppHandle) -> Result<Option<String>, String> {
+async fn choose_download_directory(app: tauri::AppHandle, temporary: Option<bool>) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let library = app.state::<Library>();
         let default = updates::download_directory(&library)?;
@@ -714,14 +723,22 @@ async fn choose_download_directory(app: tauri::AppHandle) -> Result<Option<Strin
         drop(test);
         fs::remove_file(probe).map_err(|e| e.to_string())?;
         let path = folder.to_string_lossy().into_owned();
-        mutate(&library, |store| {
-            store.preferences.download_directory = Some(path.clone());
-            Ok(())
-        })?;
+        if !temporary.unwrap_or(false) {
+            mutate(&library, |store| {
+                store.preferences.download_directory = Some(path.clone());
+                Ok(())
+            })?;
+        }
         Ok(Some(path))
     })
     .await
     .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+fn open_windows_uninstall() -> Result<(), String> {
+    Command::new(windows_tool("explorer.exe")?).arg("ms-settings:appsfeatures")
+        .spawn().map_err(|e| e.to_string())?;
+    Ok(())
 }
 #[tauri::command]
 fn open_download_directory(library: State<Library>) -> Result<(), String> {

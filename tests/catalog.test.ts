@@ -59,3 +59,12 @@ describe("library presentation", () => {
     expect(snapshot.store.apps[0].id).toBe("one");
   });
 });
+
+it("custom ordering is stable for new entries and does not alter the library", () => {
+  const apps = appViews(snapshot);
+  const original = apps.map(a => a.id);
+  const sorted = filterApps(apps, "", "All apps", "custom", ["two", "stickyn"]);
+  expect(sorted.slice(0, 2).map(a => a.id)).toEqual(["two", "stickyn"]);
+  expect(sorted.slice(2).map(a => a.id)).toEqual(original.filter(id => !["two", "stickyn"].includes(id)));
+  expect(apps.map(a => a.id)).toEqual(original);
+});

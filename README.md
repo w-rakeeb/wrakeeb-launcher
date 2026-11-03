@@ -39,7 +39,7 @@ Native code pins each catalog project's GitHub repository and approved entry-poi
 
 SHA-256 checks establish integrity against GitHub metadata; they are not publisher signatures or a security audit of every application. Each project retains its own requirements, licenses and behavior. Installer-style EXEs/MSIs, source archives and other files may require manual setup; there is no arbitrary silent-installer execution. Coucou is a neutral source entry and Vencord Auto Repair is a direct-download entry rather than managed installation recipes.
 
-Pause/resume, a multi-package queue, managed app uninstall/repair, automatic app-data migration, automatic catalog-app updates and publisher signing are not implemented. Remove from library removes a link and preserves files. Each app's own updater remains independent.
+Pause/resume, a multi-package queue, managed app repair, automatic app-data migration, automatic catalog-app updates and publisher signing are not implemented. Remove from library removes a link and preserves files. Each app's own updater remains independent.
 
 ## Data and recovery
 
@@ -93,3 +93,12 @@ Read [privacy](PRIVACY.md), [security boundaries](SECURITY.md), [rights review](
 ![Project overview](docs/images/details.png)
 
 [0.4.0 validation and remaining limits](docs/VERIFICATION-v0.4.0.md).
+
+
+## Local 0.5.0 refinement
+
+Equal-size library cards use existing project screenshots. Appearance settings include visual previews and Obsidian, Midnight and Graphite palettes. Reorder from the card's drag handle, or focus it and use Alt+Arrow keys; the custom order persists. A Downloads-page folder is a one-transfer override, while Settings controls the persistent default.
+
+Project options include Uninstall for versions installed by this launcher: the exact receipt-validated version folder moves to the Windows Recycle Bin. Downloads, older version folders and separately stored profiles remain in place. Data stored inside that version folder moves with it. Linked apps can be removed from the library without deleting files. Settings → General opens Windows uninstall settings for the launcher; portable copies can be removed after exit.
+
+Validation: 4 catalog tests, 20 Rust tests, 13 browser tests, plus an isolated production-binary test of a live GitHub demo download, separate destination, installation, recycle uninstall, preserved older version/download/profile, visible close button and About scrolling. No real user application was uninstalled. The license text is loaded on demand; its roughly 1 MB content produces an intentionally large scroll range.

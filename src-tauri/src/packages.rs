@@ -373,20 +373,23 @@ fn verify(path: &Path, asset: &Asset) -> Result<(), String> {
 pub async fn download_project_asset(
     id: String,
     asset_id: u64,
+    directory: Option<String>,
     app: tauri::AppHandle,
 ) -> Result<PackageStatus, String> {
-    transfer(id, Some(asset_id), app).await
+    transfer(id, Some(asset_id), directory, app).await
 }
 #[tauri::command]
 pub async fn download_latest_project(
     id: String,
+    directory: Option<String>,
     app: tauri::AppHandle,
 ) -> Result<PackageStatus, String> {
-    transfer(id, None, app).await
+    transfer(id, None, directory, app).await
 }
 async fn transfer(
     id: String,
     asset_id: Option<u64>,
+    directory: Option<String>,
     app: tauri::AppHandle,
 ) -> Result<PackageStatus, String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -397,7 +400,7 @@ async fn transfer(
             let selected = asset_id.or(release.recommended_asset_id).ok_or("No recommended package is published. Open GitHub releases to choose a file.")?;
             let asset = release.assets.iter().find(|a| a.id == selected).ok_or("This release file changed. Refresh the release details.")?.clone();
             p.set(&app, |s| { *s = PackageStatus { stage: "downloading".into(), project_id: id.clone(), name: asset.name.clone(), version: release.version.clone(), message: "Downloading from GitHub…".into(), total_bytes: asset.size, asset: Some(asset.clone()), ..Default::default() }; }, true)?;
-            let base = updates::download_directory(&app.state::<Library>())?; fs::create_dir_all(&base).map_err(|e| e.to_string())?;
+            let base = match directory.as_deref() { Some(path) => local_directory(Path::new(path))?, None => updates::download_directory(&app.state::<Library>())? }; fs::create_dir_all(&base).map_err(|e| e.to_string())?;
             let directory = local_directory(&base)?.join(&id).join("Downloads"); fs::create_dir_all(&directory).map_err(|e| e.to_string())?; reject_links(&directory)?;
             let destination = directory.join(format!("{}-{}-{}", release.version, &asset.digest[..8], asset.name));
             if destination.exists() { verify(&destination, &asset)?; }
@@ -595,6 +598,58 @@ pub async fn install_project_package(app: tauri::AppHandle) -> Result<PackageSta
         match result { Ok(status) => Ok(status), Err(error) => p.set(&app, |s| { s.stage = "error".into(); s.message = error; }, true) }
     }).await.map_err(|e| e.to_string())?
 }
+fn managed_uninstall_directory(installation: &Installation) -> Result<PathBuf, String> {
+    let directory = local_directory(Path::new(&installation.directory))?;
+    reject_links(&directory)?;
+    let versions = directory.parent().ok_or("Invalid version folder")?;
+    if versions.file_name().and_then(|n| n.to_str()) != Some("Versions")
+        || versions.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()) != Some(installation.catalog_id.as_str()) {
+        return Err("Only a launcher-managed version folder can be uninstalled. Use Windows Installed apps for other programs.".into());
+    }
+    let receipt_path = directory.join("wrakeeb-installation.json");
+    reject_links(&receipt_path)?;
+    let receipt: Installation = serde_json::from_slice(&fs::read(receipt_path).map_err(|_| "Installation receipt is missing")?).map_err(|_| "Installation receipt is unreadable")?;
+    if receipt.catalog_id != installation.catalog_id || receipt.sha256 != installation.sha256
+        || local_directory(Path::new(&receipt.directory))? != directory {
+        return Err("The installation receipt does not match. Nothing was removed.".into());
+    }
+    // Inspect descendants too: recycling must never follow a nested junction into unrelated data.
+    fn inspect(path: &Path) -> Result<(), String> {
+        for entry in fs::read_dir(path).map_err(|e| e.to_string())? {
+            let path = entry.map_err(|e| e.to_string())?.path();
+            reject_links(&path)?;
+            if path.is_dir() { inspect(&path)?; }
+        }
+        Ok(())
+    }
+    inspect(&directory)?;
+    Ok(directory)
+}
+#[tauri::command]
+pub async fn uninstall_project(id: String, app: tauri::AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let packages = app.state::<Packages>(); let _busy = begin(&packages)?;
+        let library = app.state::<Library>();
+        let installation = library.store.lock().map_err(|_| "Library is busy")?.installations.iter()
+            .find(|i| i.catalog_id == id).cloned().ok_or("This application was not installed by the launcher. Remove its library link or use Windows Installed apps.")?;
+        let directory = managed_uninstall_directory(&installation)?;
+        let mut process = std::process::Command::new(crate::windows_tool("WindowsPowerShell/v1.0/powershell.exe")?);
+        process.args(["-NoProfile", "-NonInteractive", "-Command", "Add-Type -AssemblyName Microsoft.VisualBasic; try { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($env:WRAKEEB_UNINSTALL_DIRECTORY, [Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs, [Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin, [Microsoft.VisualBasic.FileIO.UICancelOption]::ThrowException) } catch { exit 1 }"])
+            .env("WRAKEEB_UNINSTALL_DIRECTORY", &directory);
+        #[cfg(windows)] { use std::os::windows::process::CommandExt; process.creation_flags(0x08000000); }
+        if !process.status().map_err(|e| e.to_string())?.success() || directory.exists() {
+            return Err("Windows could not recycle this version folder. Close the application and try again.".into());
+        }
+        mutate(&library, |store| {
+            store.installations.retain(|i| i.catalog_id != id);
+            store.apps.retain(|a| a.catalog_id.as_deref() != Some(id.as_str()) || !Path::new(&a.path).starts_with(&directory));
+            crate::log(store, &id, "Uninstalled application (Recycle Bin)");
+            Ok(())
+        })?;
+        packages.set(&app, |status| { if status.project_id == id { status.stage = "".into(); status.message = "Application uninstalled.".into(); } }, true)?;
+        Ok(())
+    }).await.map_err(|e| e.to_string())?
+}
 #[tauri::command]
 pub async fn choose_install_directory(app: tauri::AppHandle) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -661,6 +716,22 @@ pub async fn create_desktop_shortcut() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn uninstall_only_accepts_the_matching_managed_version() {
+        let root = std::env::temp_dir().join(format!("wrakeeb-uninstall-{}", uuid::Uuid::new_v4()));
+        let directory = root.join("launcher-demo/Versions/1.0-test");
+        fs::create_dir_all(&directory).unwrap();
+        let mut receipt = Installation { catalog_id: "launcher-demo".into(), directory: directory.to_string_lossy().into_owned(), sha256: "verified".into(), ..Default::default() };
+        assert!(managed_uninstall_directory(&receipt).is_err());
+        atomic_json(&directory.join("wrakeeb-installation.json"), &receipt).unwrap();
+        assert_eq!(managed_uninstall_directory(&receipt).unwrap(), local_directory(&directory).unwrap());
+        receipt.sha256 = "tampered".into();
+        assert!(managed_uninstall_directory(&receipt).is_err());
+        receipt.directory = root.to_string_lossy().into_owned();
+        assert!(managed_uninstall_directory(&receipt).is_err());
+        assert!(directory.exists());
+        fs::remove_dir_all(root).unwrap();
+    }
     #[test]
     fn only_curated_release_packages_are_installable() {
         let steam = project("dual-steam").unwrap();
