@@ -603,14 +603,24 @@ fn managed_uninstall_directory(installation: &Installation) -> Result<PathBuf, S
     reject_links(&directory)?;
     let versions = directory.parent().ok_or("Invalid version folder")?;
     if versions.file_name().and_then(|n| n.to_str()) != Some("Versions")
-        || versions.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()) != Some(installation.catalog_id.as_str()) {
+        || versions
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            != Some(installation.catalog_id.as_str())
+    {
         return Err("Only a launcher-managed version folder can be uninstalled. Use Windows Installed apps for other programs.".into());
     }
     let receipt_path = directory.join("wrakeeb-installation.json");
     reject_links(&receipt_path)?;
-    let receipt: Installation = serde_json::from_slice(&fs::read(receipt_path).map_err(|_| "Installation receipt is missing")?).map_err(|_| "Installation receipt is unreadable")?;
-    if receipt.catalog_id != installation.catalog_id || receipt.sha256 != installation.sha256
-        || local_directory(Path::new(&receipt.directory))? != directory {
+    let receipt: Installation = serde_json::from_slice(
+        &fs::read(receipt_path).map_err(|_| "Installation receipt is missing")?,
+    )
+    .map_err(|_| "Installation receipt is unreadable")?;
+    if receipt.catalog_id != installation.catalog_id
+        || receipt.sha256 != installation.sha256
+        || local_directory(Path::new(&receipt.directory))? != directory
+    {
         return Err("The installation receipt does not match. Nothing was removed.".into());
     }
     // Inspect descendants too: recycling must never follow a nested junction into unrelated data.
@@ -618,7 +628,9 @@ fn managed_uninstall_directory(installation: &Installation) -> Result<PathBuf, S
         for entry in fs::read_dir(path).map_err(|e| e.to_string())? {
             let path = entry.map_err(|e| e.to_string())?.path();
             reject_links(&path)?;
-            if path.is_dir() { inspect(&path)?; }
+            if path.is_dir() {
+                inspect(&path)?;
+            }
         }
         Ok(())
     }
@@ -633,6 +645,10 @@ pub async fn uninstall_project(id: String, app: tauri::AppHandle) -> Result<(), 
         let installation = library.store.lock().map_err(|_| "Library is busy")?.installations.iter()
             .find(|i| i.catalog_id == id).cloned().ok_or("This application was not installed by the launcher. Remove its library link or use Windows Installed apps.")?;
         let directory = managed_uninstall_directory(&installation)?;
+        if crate::processes::get_running_apps()?.iter().any(|running| running.path.to_string_lossy().eq_ignore_ascii_case(&installation.entry)) {
+            return Err("Close the running application before uninstalling it. Nothing was removed.".into());
+        }
+
         let mut process = std::process::Command::new(crate::windows_tool("WindowsPowerShell/v1.0/powershell.exe")?);
         process.args(["-NoProfile", "-NonInteractive", "-Command", "Add-Type -AssemblyName Microsoft.VisualBasic; try { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($env:WRAKEEB_UNINSTALL_DIRECTORY, [Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs, [Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin, [Microsoft.VisualBasic.FileIO.UICancelOption]::ThrowException) } catch { exit 1 }"])
             .env("WRAKEEB_UNINSTALL_DIRECTORY", &directory);
@@ -721,10 +737,18 @@ mod tests {
         let root = std::env::temp_dir().join(format!("wrakeeb-uninstall-{}", uuid::Uuid::new_v4()));
         let directory = root.join("launcher-demo/Versions/1.0-test");
         fs::create_dir_all(&directory).unwrap();
-        let mut receipt = Installation { catalog_id: "launcher-demo".into(), directory: directory.to_string_lossy().into_owned(), sha256: "verified".into(), ..Default::default() };
+        let mut receipt = Installation {
+            catalog_id: "launcher-demo".into(),
+            directory: directory.to_string_lossy().into_owned(),
+            sha256: "verified".into(),
+            ..Default::default()
+        };
         assert!(managed_uninstall_directory(&receipt).is_err());
         atomic_json(&directory.join("wrakeeb-installation.json"), &receipt).unwrap();
-        assert_eq!(managed_uninstall_directory(&receipt).unwrap(), local_directory(&directory).unwrap());
+        assert_eq!(
+            managed_uninstall_directory(&receipt).unwrap(),
+            local_directory(&directory).unwrap()
+        );
         receipt.sha256 = "tampered".into();
         assert!(managed_uninstall_directory(&receipt).is_err());
         receipt.directory = root.to_string_lossy().into_owned();

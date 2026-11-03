@@ -2,6 +2,20 @@
 
 Updated: 3 November 2026. Canonical project: `D:\Codex\Wrakeeb Launcher`.
 
+## Current follow-up — 0.6.2
+
+The user continued in the intended chat and requested visible app uninstall/remove actions, Close for launched apps, moving the sidebar control into the top-left hamburger menu, a richer tray matching the supplied Dual Steam reference, and semantic popup/error colors. They clarified Close means **close launched apps**, not exit the launcher.
+
+- Current local version is 0.6.2; keep the same canonical identity, executable and library paths and both interface designs.
+- `processes.rs` retains handles for processes launched in the current launcher session, reports running instances and requests normal WM_CLOSE for their visible top-level windows. No force termination or PID-name wildcard matching. An app can cancel closing or use its own tray behavior. Untracked/external/restarted/handoff processes are not claimed as controlled.
+- App details show a management panel with separate Remove library link, managed Recycle Bin uninstall and Windows Installed apps actions. Running tracked apps block managed uninstall. Context menus include Close.
+- The sidebar toggle is under hamburger → Navigation in both designs; no separate Navigation row remains in the rail.
+- Right-click opens a lazily created, theme-aware native quick-access webview with library/discover/downloads, recent launch, running-app Close, settings, update check, app folder and Exit. Escape/blur dismiss it; it is positioned in the clicked monitor's work area. Native fallback offers Open/Exit if panel creation fails. Main-window close still exits unless close-to-tray is selected.
+- Error/success/info colors are semantic and separate from custom brand accents. Popup surfaces follow the active theme.
+- New regression script: `node tests/native-controls.mjs`; set WRAKEEB_QA_BINARY to an embedded production EXE for final verification. It compiles and runs only the included C# close-cancellation fixture and recycles only that isolated fixture installation.
+- Backup: `Backups/2026-11-03-v062-controls`, including 0.6.1 executable/source/current library. User reference images are retained privately under `work/requests/v0.6.2-controls`.
+- See `docs/VERIFICATION-v0.6.2.md` for final checks and limitations. Earlier results below are historical 0.6.1 evidence. No public 0.6.x binary release is implied by local delivery.
+
 ## Read this first
 
 The user accidentally gave the upgrade request in another chat, then explicitly asked to consolidate all work and its context here. **There must be one app, not a separate Claude edition.** Settings → Appearance → Interface design offers **Original design** and **Claude design**. Both use the same library, install/download logic, settings file and selectable color themes. Existing users default to Original design. The old separate prototype is retained only as a rollback archive.

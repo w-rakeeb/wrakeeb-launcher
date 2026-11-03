@@ -1,6 +1,6 @@
 # Wrakeeb Launcher
 
-Applications, scripts and utilities in one Windows desktop library. **Local development version 0.6.1** integrates the upgrade into one app with selectable Original and Claude designs. Read [the chat handoff](HANDOFF.md) before continuing work. The published 0.4.0 release remains separate from this local upgrade.
+Applications, scripts and utilities in one Windows desktop library. **Local development version 0.6.2** integrates the upgrade into one app with selectable Original and Claude designs. Read [the chat handoff](HANDOFF.md) before continuing work. The published 0.4.0 release remains separate from this local upgrade.
 
 ## Install on your PC
 
@@ -107,3 +107,13 @@ Validation: 4 catalog tests, 20 Rust tests, 13 browser tests, plus an isolated p
 The Claude brief is integrated into this app. Settings → Appearance → Interface design switches between Original design and Claude design. Color themes and accent choices work with both. All features, library entries and storage paths are shared. Existing users default to Original design.
 
 The separate prototype is archived under Backups/2026-11-03-consolidation. Use the canonical project at D:/Codex/Wrakeeb Launcher, dev port 1420 and the original com.wrakeeb.launcher identity. See HANDOFF.md for chat references, implementation history, rollback and remaining backend limits. Historical 0.6.0 audit and verification reports describe the prototype before consolidation.
+
+## Local 0.6.2 controls update
+
+The sidebar toggle is inside the top-left Application menu → Navigation. Both interface designs share it. App details expose Remove from library and Uninstall actions; externally installed applications are managed through Windows Installed apps, while launcher-managed versions use receipt-validated Recycle Bin removal.
+
+Close application requests a normal close for an instance started by the current launcher session. It honors an app's cancellation/save handling and own close-to-tray behavior. It never force-kills a process. Processes started outside the launcher, before restarting it, or handed off by a short-lived bootstrapper are not automatically controlled.
+
+Tray right-click opens themed quick access: destinations, recent applications, tracked running-app Close, settings, update check, launcher folder and Exit. The panel opens on demand and follows the active color theme. Errors, completed actions and informational notices use separate semantic colors.
+
+[0.6.2 verification and remaining limits](docs/VERIFICATION-v0.6.2.md).

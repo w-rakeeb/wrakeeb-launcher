@@ -1,4 +1,6 @@
-# Current local development status — 0.6.1
+# Current local development status — 0.6.2
+
+0.6.2 adds visible app management, session-owned normal Close, a hamburger sidebar control and themed tray quick access. See VERIFICATION-v0.6.2.md for checks and limits.
 
 The upgrade is consolidated into one Wrakeeb Launcher app. Original and Claude designs are selectable in Settings → Appearance, sharing the same library, color themes and backend. See [handoff and chat context](../HANDOFF.md) and [current verification](VERIFICATION-v0.6.1.md).
 

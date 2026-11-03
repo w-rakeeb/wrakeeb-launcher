@@ -8,8 +8,8 @@
   --color-accent: #3949ab; --color-accent-content: #ffffff;
   --color-primary: #3949ab;
 }
-:root[data-interface="classic"] .desktop-menus { display: flex; }
-:root[data-interface="classic"] .menu-toggle { display: none; }
+:root[data-interface="classic"] .desktop-menus { display: none; }
+:root[data-interface="classic"] .menu-toggle { display: flex; }
 :root[data-interface="classic"] .top-add { background: var(--surface-3); color: var(--text-primary); border-color: var(--rule); }
 :root[data-interface="classic"] .nav-item.active::before { display: none; }
 :root[data-interface="classic"] .nav-item.active { color: var(--color-accent); }

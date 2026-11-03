@@ -11,25 +11,34 @@ export function AppMenu({
   back,
   canGoBack,
   menus,
+  sidebarCollapsed,
+  toggleSidebar,
 }: {
   back: () => void;
   canGoBack: boolean;
   menus: Record<string, MenuAction[]>;
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const root = useRef<HTMLElement>(null);
   useEffect(() => {
     const close = (event: MouseEvent) => {
-      if (!root.current?.contains(event.target as Node))
+      if (!root.current?.contains(event.target as Node)) {
+        setExpanded(false);
         root.current
           ?.querySelectorAll("details")
           .forEach((item) => (item.open = false));
+      }
     };
     const keyboard = (event: KeyboardEvent) => {
-      if (event.key === "Escape")
+      if (event.key === "Escape") {
+        setExpanded(false);
+        root.current?.querySelector<HTMLButtonElement>(".menu-toggle")?.focus();
         root.current
           ?.querySelectorAll("details")
           .forEach((item) => (item.open = false));
+      }
       if (
         event.altKey &&
         ["f", "e", "v", "h"].includes(event.key.toLowerCase())
@@ -41,8 +50,11 @@ export function AppMenu({
           item.dataset.menu?.startsWith(event.key.toLowerCase()),
         );
         if (item) {
+          setExpanded(true);
           item.open = !item.open;
-          item.querySelector<HTMLElement>("button")?.focus();
+          requestAnimationFrame(() =>
+            item.querySelector<HTMLElement>("button")?.focus(),
+          );
         }
       }
     };
@@ -64,8 +76,38 @@ export function AppMenu({
       >
         <ArrowLeft size={15} />
       </button>
-      <button className="caption-back menu-toggle" aria-label="Application menu" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}><Menu size={16} /></button>
-      <nav aria-label="Application menu" className={`desktop-menus ${expanded ? "is-expanded" : ""}`}>
+      <button
+        className="caption-back menu-toggle"
+        aria-label="Application menu"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(!expanded)}
+      >
+        <Menu size={16} />
+      </button>
+      <nav
+        aria-label="Application menu"
+        className={`desktop-menus ${expanded ? "is-expanded" : ""}`}
+      >
+        <details className="dropdown navigation-menu" data-menu="navigation">
+          <summary>Navigation</summary>
+          <ul
+            className="dropdown-content menu menu-sm"
+            aria-label="Navigation controls"
+          >
+            <li>
+              <button
+                aria-pressed={sidebarCollapsed}
+                onClick={(event) => {
+                  event.currentTarget.closest("details")!.open = false;
+                  setExpanded(false);
+                  toggleSidebar();
+                }}
+              >
+                {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              </button>
+            </li>
+          </ul>
+        </details>
         {Object.entries(menus).map(([name, actions]) => (
           <details
             key={name}
@@ -113,6 +155,7 @@ export function AppMenu({
                     disabled={item.disabled}
                     onClick={(event) => {
                       event.currentTarget.closest("details")!.open = false;
+                      setExpanded(false);
                       item.action();
                     }}
                   >

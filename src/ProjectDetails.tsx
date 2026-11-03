@@ -8,12 +8,15 @@ import {
   Star,
   ExternalLink,
   MoreHorizontal,
+  Square,
+  Trash2,
 } from "lucide-react";
 import type { Snapshot, ViewApp } from "./catalog";
 import type { PackageController, ProjectRelease } from "./usePackages";
 import { ProjectGallery, AppGlyph } from "./AppArtwork";
 import { ProjectReleasePanel } from "./DistributionPanel";
 import { bytes } from "./UpdateView";
+import type { RunningApp } from "./useRunningApps";
 import { desktop } from "./bridge";
 
 export function ProjectDetails({
@@ -27,6 +30,9 @@ export function ProjectDetails({
   favorite,
   remove,
   uninstall,
+  running,
+  closeApp,
+  manageWindows,
   createShortcut,
   openRepository,
   openFolder,
@@ -45,6 +51,9 @@ export function ProjectDetails({
   favorite: () => void;
   remove: () => void;
   uninstall: () => void;
+  running?: RunningApp;
+  closeApp: () => void;
+  manageWindows: () => void;
   createShortcut: () => void;
   openRepository: () => void;
   openFolder: () => void;
@@ -115,6 +124,16 @@ export function ProjectDetails({
         </div>
         <div className="project-primary-actions">
           {action}
+          {running && (
+            <button
+              className="btn btn-sm"
+              disabled={busy || !running.canClose}
+              onClick={closeApp}
+            >
+              <Square size={14} />
+              Close application
+            </button>
+          )}
           <button
             className="btn btn-sm"
             disabled={busy || !desktop}
@@ -125,6 +144,65 @@ export function ProjectDetails({
           </button>
         </div>
       </header>
+      {(app.linked || app.available) && (
+        <section
+          className="project-management"
+          aria-label="Application management"
+        >
+          <div>
+            <strong>
+              {running
+                ? "Running from this launcher"
+                : app.installed
+                  ? "Launcher-managed installation"
+                  : "Linked or detected application"}
+            </strong>
+            {running && (
+              <p>
+                Close requests a normal window close. Save prompts and the app’s
+                own close-to-tray behavior are respected.
+              </p>
+            )}
+            <p>
+              {app.installed
+                ? "Uninstall moves this installed version to the Recycle Bin. Removing a link keeps its files."
+                : "Remove a library link without deleting files. Registered installations can be uninstalled through Windows."}
+            </p>
+          </div>
+          <div className="management-actions">
+            {app.linked && (
+              <button className="btn btn-sm" disabled={busy} onClick={remove}>
+                Remove from library
+              </button>
+            )}
+            {app.installed ? (
+              <button
+                className="btn btn-sm btn-error btn-outline"
+                disabled={busy || packages.busy || !!running}
+                title={
+                  running
+                    ? "Close the application before uninstalling"
+                    : undefined
+                }
+                onClick={uninstall}
+              >
+                <Trash2 size={15} />
+                Uninstall application…
+              </button>
+            ) : (
+              app.kind !== "Script" && (
+                <button
+                  className="btn btn-sm"
+                  disabled={!desktop || busy}
+                  onClick={manageWindows}
+                >
+                  Uninstall in Windows…
+                </button>
+              )
+            )}
+          </div>
+        </section>
+      )}
       <div className="project-facts">
         {facts.map(([label, value]) => (
           <div key={label}>
@@ -205,13 +283,34 @@ export function ProjectDetails({
                 Open GitHub repository
               </button>
             </li>
-            {path && <li><button onClick={createShortcut}>Create desktop shortcut</button></li>}
+            {path && (
+              <li>
+                <button onClick={createShortcut}>
+                  Create desktop shortcut
+                </button>
+              </li>
+            )}
             {path && (
               <li>
                 <button onClick={reveal}>Open application folder</button>
               </li>
             )}
-            {app.installed && <li><button className="text-error" disabled={busy || packages.busy} onClick={uninstall}>Uninstall application…</button></li>}
+            {app.installed && (
+              <li>
+                <button
+                  className="text-error"
+                  disabled={busy || packages.busy || !!running}
+                  title={
+                    running
+                      ? "Close the application before uninstalling"
+                      : undefined
+                  }
+                  onClick={uninstall}
+                >
+                  Uninstall application…
+                </button>
+              </li>
+            )}
             {app.linked && (
               <>
                 <li>
@@ -271,7 +370,14 @@ export function ProjectDetails({
                     (path ? "External installation" : "Not installed")}
                 </dd>
               </div>
-              <div><dt>Last launched</dt><dd>{app.linked?.lastLaunched ? new Date(app.linked.lastLaunched * 1000).toLocaleString() : "Never launched"}</dd></div>
+              <div>
+                <dt>Last launched</dt>
+                <dd>
+                  {app.linked?.lastLaunched
+                    ? new Date(app.linked.lastLaunched * 1000).toLocaleString()
+                    : "Never launched"}
+                </dd>
+              </div>
               <div>
                 <dt>License</dt>
                 <dd>{release?.license ?? "See repository"}</dd>

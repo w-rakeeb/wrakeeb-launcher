@@ -13,6 +13,7 @@ use tauri::{Manager, State};
 use tauri_plugin_dialog::DialogExt;
 mod discovery;
 mod packages;
+mod processes;
 mod shell;
 mod updates;
 
@@ -485,12 +486,10 @@ fn launch_linked(library: &Library, id: &str) -> Result<(), String> {
         .cloned()
         .ok_or("Application is no longer linked")?;
     let mut command = launch_command(Path::new(&linked.path))?;
-    let mut child = command
+    let child = command
         .spawn()
         .map_err(|e| format!("Windows could not open this application: {e}"))?;
-    std::thread::spawn(move || {
-        let _ = child.wait();
-    });
+    processes::track(id, &linked.name, Path::new(&linked.path), child)?;
     mutate(library, |store| {
         if let Some(item) = store.apps.iter_mut().find(|item| item.id == id) {
             item.last_launched = Some(now());
@@ -530,18 +529,27 @@ fn validate_preferences(preferences: &Preferences) -> Result<(), String> {
     if !["classic", "claude"].contains(&preferences.interface_style.as_str()) {
         return Err("Choose a supported interface design.".into());
     }
-    if !["discord", "wrakeeb", "slate", "light", "obsidian", "midnight", "graphite"].contains(&preferences.theme.as_str())
+    if ![
+        "discord", "wrakeeb", "slate", "light", "obsidian", "midnight", "graphite",
+    ]
+    .contains(&preferences.theme.as_str())
         || !["default", "blue", "teal", "red", "amber"].contains(&preferences.accent.as_str())
     {
         return Err("Choose a supported theme.".into());
     }
-    if preferences.custom_accent.as_ref().is_some_and(|v| v.len() != 7 || !v.starts_with('#') || !v[1..].chars().all(|c| c.is_ascii_hexdigit())) {
+    if preferences.custom_accent.as_ref().is_some_and(|v| {
+        v.len() != 7 || !v.starts_with('#') || !v[1..].chars().all(|c| c.is_ascii_hexdigit())
+    }) {
         return Err("Use a six-digit hex accent color.".into());
     }
-    if !["grid", "list"].contains(&preferences.library_view.as_str()) || !(200..=360).contains(&preferences.card_size) {
+    if !["grid", "list"].contains(&preferences.library_view.as_str())
+        || !(200..=360).contains(&preferences.card_size)
+    {
         return Err("Choose a supported library size and view.".into());
     }
-    if !["name", "recent", "added", "size", "custom"].contains(&preferences.library_sort.as_str()) || preferences.custom_order.len() > 10000 {
+    if !["name", "recent", "added", "size", "custom"].contains(&preferences.library_sort.as_str())
+        || preferences.custom_order.len() > 10000
+    {
         return Err("Choose a supported library order.".into());
     }
     if let Some(path) = &preferences.download_directory {
@@ -655,6 +663,12 @@ fn main() {
             shell::open_launcher_data,
             shell::open_notice_file,
             shell::exit_launcher,
+            shell::show_tray_panel,
+            shell::hide_tray_panel,
+            shell::tray_navigate,
+            shell::open_launcher_folder,
+            processes::get_running_apps,
+            processes::close_launched_application,
             shell::get_shell_status,
             shell::open_storage_directory,
             packages::download_latest_project,
@@ -733,7 +747,10 @@ pub fn local_directory(path: &Path) -> Result<PathBuf, String> {
     Ok(PathBuf::from(text.strip_prefix(r"\\?\").unwrap_or(&text)))
 }
 #[tauri::command]
-async fn choose_download_directory(app: tauri::AppHandle, temporary: Option<bool>) -> Result<Option<String>, String> {
+async fn choose_download_directory(
+    app: tauri::AppHandle,
+    temporary: Option<bool>,
+) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let library = app.state::<Library>();
         let default = updates::download_directory(&library)?;
@@ -773,8 +790,10 @@ async fn choose_download_directory(app: tauri::AppHandle, temporary: Option<bool
 }
 #[tauri::command]
 fn open_windows_uninstall() -> Result<(), String> {
-    Command::new(windows_tool("explorer.exe")?).arg("ms-settings:appsfeatures")
-        .spawn().map_err(|e| e.to_string())?;
+    Command::new(windows_tool("explorer.exe")?)
+        .arg("ms-settings:appsfeatures")
+        .spawn()
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 #[tauri::command]
@@ -835,12 +854,18 @@ mod tests {
     }
     #[test]
     fn legacy_preferences_default_new_fields_without_losing_existing_choices() {
-        let prefs: Preferences = serde_json::from_str(r#"{"theme":"slate","compact":true,"closeToTray":true}"#).unwrap();
-        assert_eq!(prefs.theme, "slate"); assert!(prefs.compact && prefs.close_to_tray);
+        let prefs: Preferences =
+            serde_json::from_str(r#"{"theme":"slate","compact":true,"closeToTray":true}"#).unwrap();
+        assert_eq!(prefs.theme, "slate");
+        assert!(prefs.compact && prefs.close_to_tray);
         assert_eq!(prefs.interface_style, "classic");
-        assert_eq!(prefs.card_size, 260); assert_eq!(prefs.library_view, "grid"); assert!(prefs.notifications);
+        assert_eq!(prefs.card_size, 260);
+        assert_eq!(prefs.library_view, "grid");
+        assert!(prefs.notifications);
         assert!(validate_preferences(&prefs).is_ok());
-        let mut invalid = prefs; invalid.custom_accent = Some("#oops!!".into()); assert!(validate_preferences(&invalid).is_err());
+        let mut invalid = prefs;
+        invalid.custom_accent = Some("#oops!!".into());
+        assert!(validate_preferences(&invalid).is_err());
     }
     #[test]
     fn interface_design_round_trips_and_rejects_unknown_values() {

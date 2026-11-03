@@ -1,5 +1,15 @@
 # Release history
 
+## 0.6.2 — local controls update, 3 November 2026
+
+- Exposed remove/managed uninstall/Windows uninstall actions in app details and retained card context actions.
+- Added session-owned running-process tracking and normal application Close, respecting cancellation and never force-terminating. Managed uninstall rejects a tracked running app.
+- Moved sidebar collapse/expand under the top-left hamburger menu in both interface designs.
+- Replaced the three-item tray menu with a themed, monitor-aware quick-access panel, recent apps and running-app close controls, retaining a native fallback.
+- Corrected semantic feedback colors, popup surfaces and disabled destructive-action styling.
+- Preserved canonical app identity, shared library, previous releases and 0.6.1 rollback files. Local binary delivery; no public 0.6.x release claimed.
+
+
 ## 0.4.0 — 3 November 2026
 
 - Rebuilt shell navigation with File/Edit/View/Help, integrated caption controls and quieter sidebar; removed workspace breadcrumb and redundant footer.
