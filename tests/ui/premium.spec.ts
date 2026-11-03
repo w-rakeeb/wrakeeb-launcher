@@ -47,7 +47,7 @@ test("cards stay equal, close stays inside, and drag order survives restart", as
 
 test("all darker themes save, and settings fit compact windows", async ({ page }) => {
   await page.goto("/#settings");
-  for (const [name, id] of [["Obsidian", "obsidian"], ["Midnight", "midnight"], ["Graphite", "graphite"], ["Light", "light"]]) {
+  for (const [name, id] of [["AMOLED", "obsidian"], ["Midnight", "midnight"], ["Graphite", "graphite"], ["Light", "light"]]) {
     await page.getByRole("button", { name: `${name} theme`, exact: true }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", id);
   }
@@ -95,6 +95,7 @@ test("About has one working scroll area through the license notices", async ({ p
   await page.getByRole("button", { name: "Got it", exact: true }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
+
 
 
 

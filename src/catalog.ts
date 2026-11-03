@@ -195,6 +195,14 @@ export interface Preferences {
   rememberPage: boolean;
   theme?: "discord" | "wrakeeb" | "slate" | "light" | "obsidian" | "midnight" | "graphite";
   customOrder?: string[];
+  customAccent?: string | null;
+  sidebarCollapsed?: boolean;
+  libraryView?: "grid" | "list";
+  libraryFilter?: string;
+  cardSize?: number;
+  hideLinked?: boolean;
+  onboardingComplete?: boolean;
+  notifications?: boolean;
   librarySort?: string;
   accent?: "default" | "blue" | "teal" | "red" | "amber";
   closeToTray?: boolean;

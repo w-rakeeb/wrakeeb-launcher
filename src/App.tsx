@@ -22,6 +22,9 @@ import {
   RefreshCw,
   CircleHelp,
   GripVertical,
+  PanelLeftClose,
+  PanelLeftOpen,
+  WifiOff,
 } from "lucide-react";
 import {
   catalog,
@@ -86,6 +89,12 @@ function humanTime(value: number): string {
 
 export function App() {
   const [snapshot, setSnapshot] = useState<Snapshot>();
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update); window.addEventListener("offline", update);
+    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
+  }, []);
   const updates = useLauncherUpdates(
     snapshot
       ? (snapshot.store.preferences.checkUpdatesOnStart ?? true)
@@ -95,6 +104,7 @@ export function App() {
     document.documentElement.dataset.theme =
       snapshot?.store.preferences.theme ?? "discord";
     const accent = snapshot?.store.preferences.accent ?? "default";
+    const customAccent = snapshot?.store.preferences.customAccent;
     const colors: Record<string, string> = {
       blue: "#4055d6",
       teal: "#087f72",
@@ -102,16 +112,19 @@ export function App() {
       amber: "#946000",
     };
     for (const token of ["--color-primary", "--color-accent"]) {
-      if (colors[accent])
-        document.documentElement.style.setProperty(token, colors[accent]);
+      if (customAccent || colors[accent])
+        document.documentElement.style.setProperty(token, customAccent || colors[accent]);
       else document.documentElement.style.removeProperty(token);
     }
     for (const token of ["--color-primary-content", "--color-accent-content"]) {
-      if (colors[accent])
-        document.documentElement.style.setProperty(token, "#ffffff");
+      if (customAccent || colors[accent]) {
+        const color = customAccent || colors[accent];
+        const luminance = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16) / 255).map(c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4).reduce((v, c, i) => v + c * [.2126, .7152, .0722][i], 0);
+        document.documentElement.style.setProperty(token, luminance > .179 ? "#111318" : "#ffffff");
+      }
       else document.documentElement.style.removeProperty(token);
     }
-  }, [snapshot?.store.preferences.theme, snapshot?.store.preferences.accent]);
+  }, [snapshot?.store.preferences.theme, snapshot?.store.preferences.accent, snapshot?.store.preferences.customAccent]);
   const [page, setPage] = useState<Page>(readPage);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All apps");
@@ -369,7 +382,7 @@ export function App() {
 
   return (
     <div
-      className={`launcher ${snapshot?.store.preferences.compact ? "compact" : ""} ${snapshot?.store.preferences.reduceMotion ? "reduce-motion" : ""} ${snapshot?.store.preferences.largeText ? "large-text" : ""}`}
+      className={`launcher ${snapshot?.store.preferences.sidebarCollapsed ? "rail-collapsed" : ""} ${snapshot?.store.preferences.compact ? "compact" : ""} ${snapshot?.store.preferences.reduceMotion ? "reduce-motion" : ""} ${snapshot?.store.preferences.largeText ? "large-text" : ""}`}
     >
       <a href="#main" className="skip-link">
         Skip to content
@@ -460,17 +473,21 @@ export function App() {
             <span>Launcher</span>
           </div>
         </div>
+        <button className="rail-toggle" title="Collapse or expand sidebar" aria-label="Collapse or expand sidebar" aria-pressed={snapshot?.store.preferences.sidebarCollapsed ?? false} disabled={!desktop || !!busy} onClick={() => void preferences({ sidebarCollapsed: !snapshot?.store.preferences.sidebarCollapsed })}>{snapshot?.store.preferences.sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}<span>Navigation</span></button>
         <nav>
           {navigation.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               aria-label={label}
+              title={label}
               className={`nav-item ${page === id && !(id === "library" && filter === "Favorites") ? "active" : ""}`}
               onClick={() => navigate(id)}
               aria-current={page === id ? "page" : undefined}
             >
               <Icon size={18} aria-hidden="true" />
               <span>{label}</span>
+              {id === "downloads" && packages.busy && <b className="nav-count">1</b>}
+              {id === "updates" && updates.status.stage === "available" && <b className="nav-count">1</b>}
             </button>
           ))}
         </nav>
@@ -503,7 +520,7 @@ export function App() {
           </button>
           <div className="build-info">
             <span className="build-dot" />
-            Version <span>{APP_VERSION}</span>
+            <span className="connection-state">{online ? "Online" : "Offline"}</span><span>{APP_VERSION}</span>
           </div>
         </div>
       </aside>
@@ -544,6 +561,7 @@ export function App() {
               launch applications.
             </div>
           )}
+          {!online && <div className="offline-banner" role="status"><WifiOff size={16} /><span>Offline · Your local apps are ready. Release checks and downloads need a connection.</span></div>}
           {loadError ? (
             <section className="load-error" role="alert">
               <h1>Unable to open your library</h1>

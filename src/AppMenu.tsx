@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { ArrowLeft } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Menu } from "lucide-react";
 import { WindowControls } from "./WindowControls";
 export interface MenuAction {
   label: string;
@@ -16,6 +16,7 @@ export function AppMenu({
   canGoBack: boolean;
   menus: Record<string, MenuAction[]>;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const root = useRef<HTMLElement>(null);
   useEffect(() => {
     const close = (event: MouseEvent) => {
@@ -63,7 +64,8 @@ export function AppMenu({
       >
         <ArrowLeft size={15} />
       </button>
-      <nav aria-label="Application menu" className="desktop-menus">
+      <button className="caption-back menu-toggle" aria-label="Application menu" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}><Menu size={16} /></button>
+      <nav aria-label="Application menu" className={`desktop-menus ${expanded ? "is-expanded" : ""}`}>
         {Object.entries(menus).map(([name, actions]) => (
           <details
             key={name}

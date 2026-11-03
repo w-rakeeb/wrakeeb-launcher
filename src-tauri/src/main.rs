@@ -45,6 +45,14 @@ struct Preferences {
     record_activity: bool,
     large_text: bool,
     custom_order: Vec<String>,
+    custom_accent: Option<String>,
+    sidebar_collapsed: bool,
+    library_view: String,
+    library_filter: String,
+    card_size: u16,
+    hide_linked: bool,
+    onboarding_complete: bool,
+    notifications: bool,
     library_sort: String,
 }
 impl Default for Preferences {
@@ -65,6 +73,14 @@ impl Default for Preferences {
             record_activity: true,
             large_text: false,
             custom_order: vec![],
+            custom_accent: None,
+            sidebar_collapsed: false,
+            library_view: "grid".into(),
+            library_filter: "All apps".into(),
+            card_size: 260,
+            hide_linked: false,
+            onboarding_complete: false,
+            notifications: true,
             library_sort: "name".into(),
         }
     }
@@ -515,7 +531,13 @@ fn save_preferences(preferences: Preferences, library: State<Library>) -> Result
     {
         return Err("Choose a supported theme.".into());
     }
-    if !["name", "recent", "custom"].contains(&preferences.library_sort.as_str()) || preferences.custom_order.len() > 10000 {
+    if preferences.custom_accent.as_ref().is_some_and(|v| v.len() != 7 || !v.starts_with('#') || !v[1..].chars().all(|c| c.is_ascii_hexdigit())) {
+        return Err("Use a six-digit hex accent color.".into());
+    }
+    if !["grid", "list"].contains(&preferences.library_view.as_str()) || !(200..=360).contains(&preferences.card_size) {
+        return Err("Choose a supported library size and view.".into());
+    }
+    if !["name", "recent", "added", "size", "custom"].contains(&preferences.library_sort.as_str()) || preferences.custom_order.len() > 10000 {
         return Err("Choose a supported library order.".into());
     }
     if let Some(path) = &preferences.download_directory {
@@ -600,7 +622,7 @@ fn main() {
             )
             .title("Wrakeeb Launcher")
             .inner_size(1280.0, 860.0)
-            .min_inner_size(760.0, 560.0)
+            .min_inner_size(960.0, 600.0)
             .decorations(false)
             .shadow(true)
             .center()

@@ -109,13 +109,11 @@ export function SettingsView({
               <div className="settings-panel appearance-panel">
                 <div className="theme-gallery" role="group" aria-label="Theme previews">
                   {[
-                    ["discord", "Discord", "Familiar charcoal", "#17181c", "#25262c", "#a5adff"],
-                    ["obsidian", "Obsidian", "Deep neutral black", "#090a0c", "#15171a", "#e5e7eb"],
-                    ["midnight", "Midnight", "Dark ocean blue", "#0b111c", "#192334", "#9abfff"],
-                    ["graphite", "Graphite", "Soft smoke grey", "#1b1c1e", "#2b2d30", "#d8c3a6"],
-                    ["wrakeeb", "Charcoal", "Original warm dark", "#171818", "#303232", "#dbb383"],
-                    ["slate", "Slate", "Cool blue grey", "#17212d", "#2d3b4e", "#adcbff"],
-                    ["light", "Light", "A brighter workspace", "#f4f6f9", "#e1e5ec", "#4055d6"],
+                    ["discord", "Wrakeeb Dark", "Signature charcoal", "#151619", "#27292e", "#ed776a"],
+                    ["graphite", "Graphite", "Soft smoke grey", "#1b1c1e", "#2b2d30", "#ed776a"],
+                    ["midnight", "Midnight", "Deep ocean blue", "#0b111c", "#192334", "#ed776a"],
+                    ["obsidian", "AMOLED", "Pure black", "#000000", "#141416", "#ed776a"],
+                    ["light", "Light", "A brighter workspace", "#f4f6f9", "#e1e5ec", "#b43830"],
                   ].map(([id, name, description, ground, surface, accent]) => <button key={id} className={`theme-choice ${prefs.theme === id ? "selected" : ""}`} aria-label={`${name} theme`} aria-pressed={prefs.theme === id} disabled={busy || !desktop} onClick={() => change({ theme: id as Preferences["theme"] })}>
                     <span className="theme-preview" style={{ background: ground, color: accent }}><i style={{ background: surface }} /><b /><span><i style={{ background: surface }} /><i style={{ background: surface }} /><i style={{ background: surface }} /></span></span>
                     <strong>{name}<span>{prefs.theme === id ? <Check size={14} aria-hidden="true" /> : null}</span></strong><small>{description}</small>
@@ -135,11 +133,11 @@ export function SettingsView({
                     })
                   }
                 >
-                  <option value="discord">Dual Discord · Default</option>
-                  <option value="wrakeeb">Original charcoal</option>
-                  <option value="slate">Slate</option>
+                  <option value="discord">Wrakeeb Dark · Default</option>
+                  <option value="wrakeeb">Wrakeeb Dark · Legacy</option>
+                  <option value="slate">Midnight · Legacy</option>
                   <option value="light">Corporate light</option>
-                  <option value="obsidian">Obsidian · Deep black</option>
+                  <option value="obsidian">AMOLED · Pure black</option>
                   <option value="midnight">Midnight · Dark blue</option>
                   <option value="graphite">Graphite · Smoke grey</option>
                 </select>
