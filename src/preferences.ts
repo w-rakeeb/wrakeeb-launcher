@@ -16,3 +16,5 @@ export function accessibleAccent(hex: string, theme: string): string {
   for (let step = 0; step <= 20 && contrast(output, background) < 4.5; step++) output = "#" + [1,3,5].map(i => Math.round(parseInt(hex.slice(i,i+2),16) * (1 - step / 20) + target * step / 20).toString(16).padStart(2,"0")).join("");
   return output;
 }
+
+export const accentForeground = (hex: string): string => luminance(hex) > .179 ? "#000000" : "#ffffff";

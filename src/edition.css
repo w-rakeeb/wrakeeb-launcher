@@ -188,3 +188,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .settings-content .settings-section[hidden] { display: none !important; }
 .settings-no-match { grid-column: 2; color: var(--muted); font-size: 12px; padding: 20px; }
+
+.edition-badge { font-size: 10px; color: var(--muted); margin-left: 10px; font-weight: 400; }
+.notice-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.notice-pagination label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+.notice-pagination .select { width: 100px; }
+@media(max-width:650px) { .edition-badge { display: none; } }
+
+.footer-update { font-size: 11px; color: var(--color-accent); text-align: left; padding: 10px; }
+.rail-collapsed .footer-update { display: none; }
+@media(max-width:1150px) { .footer-update { display: none; } }
+/* Motion stays on compositor properties and within the requested 120–200 ms budget. */
+.app-item { transition: transform 150ms, opacity 150ms; }
+.modal, .modal-box { animation: none; transition: transform 150ms ease-out, opacity 150ms ease-out; }
+.modal-box { translate: 0; scale: 1; }
+@media(prefers-reduced-motion:reduce) { .app-item, .modal, .modal-box { transition: none !important; } }
+.reduce-motion .app-item, .reduce-motion .modal, .reduce-motion .modal-box { transition: none !important; }

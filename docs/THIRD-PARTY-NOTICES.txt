@@ -1,5 +1,5 @@
 THIRD-PARTY NOTICES
-Wrakeeb Launcher 0.4.0
+Wrakeeb Launcher 0.6.0
 
 This inventory includes resolved Windows Rust dependencies and front-end/build packages. Inclusion is intentionally broad; it does not assert that every listed package is linked into the final executable. Original license terms govern each component.
 

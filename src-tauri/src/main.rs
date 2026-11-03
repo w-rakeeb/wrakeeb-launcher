@@ -624,7 +624,7 @@ fn main() {
                 "main",
                 tauri::WebviewUrl::App("index.html".into()),
             )
-            .title("Wrakeeb Launcher")
+            .title("Wrakeeb Launcher · Claude Edition")
             .inner_size(1280.0, 860.0)
             .min_inner_size(960.0, 600.0)
             .decorations(false)
@@ -648,6 +648,7 @@ fn main() {
             shell::import_preferences,
             shell::storage_capacity,
             shell::open_launcher_data,
+            shell::open_notice_file,
             shell::exit_launcher,
             shell::get_shell_status,
             shell::open_storage_directory,

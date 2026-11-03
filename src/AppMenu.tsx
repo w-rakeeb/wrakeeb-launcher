@@ -126,7 +126,7 @@ export function AppMenu({
         ))}
       </nav>
       <span className="caption-title" data-tauri-drag-region>
-        Wrakeeb Launcher
+        Wrakeeb Launcher <small className="edition-badge">Claude Edition</small>
       </span>
       <WindowControls />
     </header>

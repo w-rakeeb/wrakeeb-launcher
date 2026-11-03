@@ -2,7 +2,7 @@ from pathlib import Path
 import json,subprocess,hashlib
 metadata=json.loads(subprocess.check_output(['cargo','metadata','--locked','--format-version','1','--filter-platform','x86_64-pc-windows-msvc','--manifest-path','src-tauri/Cargo.toml'],text=True,encoding='utf-8'))
 ids={node['id'] for node in metadata['resolve']['nodes']}
-sections=['THIRD-PARTY NOTICES\nWrakeeb Launcher 0.4.0\n\nThis inventory includes resolved Windows Rust dependencies and front-end/build packages. Inclusion is intentionally broad; it does not assert that every listed package is linked into the final executable. Original license terms govern each component.\n']
+sections=['THIRD-PARTY NOTICES\nWrakeeb Launcher 0.6.0\n\nThis inventory includes resolved Windows Rust dependencies and front-end/build packages. Inclusion is intentionally broad; it does not assert that every listed package is linked into the final executable. Original license terms govern each component.\n']
 inventory=[];missing=[]
 for pkg in sorted(metadata['packages'],key=lambda p:p['name']):
  if pkg['id'] not in ids or pkg['name']=='wrakeeb-launcher':continue

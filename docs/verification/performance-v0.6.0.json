@@ -1,0 +1,86 @@
+{
+  "method": "Five alternating paired runs per version, after compilation and functional tests completed; fresh process and fresh WebView2 profile, no OS disk-cache flush. Startup includes CDP harness overhead; idle entire native+WebView2 tree measured 1.5 seconds after UI ready.",
+  "samples": {
+    "v050": [
+      {
+        "startupMs": 2713,
+        "workingSet": 449433600,
+        "privateBytes": 221077504,
+        "processes": 7
+      },
+      {
+        "startupMs": 3262,
+        "workingSet": 449978368,
+        "privateBytes": 222191616,
+        "processes": 7
+      },
+      {
+        "startupMs": 2975,
+        "workingSet": 435732480,
+        "privateBytes": 216702976,
+        "processes": 7
+      },
+      {
+        "startupMs": 4379,
+        "workingSet": 451031040,
+        "privateBytes": 226660352,
+        "processes": 7
+      },
+      {
+        "startupMs": 3354,
+        "workingSet": 440672256,
+        "privateBytes": 221171712,
+        "processes": 7
+      }
+    ],
+    "v060": [
+      {
+        "startupMs": 3654,
+        "workingSet": 455462912,
+        "privateBytes": 221376512,
+        "processes": 7
+      },
+      {
+        "startupMs": 2688,
+        "workingSet": 447574016,
+        "privateBytes": 219115520,
+        "processes": 7
+      },
+      {
+        "startupMs": 3329,
+        "workingSet": 455421952,
+        "privateBytes": 225095680,
+        "processes": 7
+      },
+      {
+        "startupMs": 4521,
+        "workingSet": 458706944,
+        "privateBytes": 221085696,
+        "processes": 7
+      },
+      {
+        "startupMs": 3038,
+        "workingSet": 444682240,
+        "privateBytes": 217022464,
+        "processes": 7
+      }
+    ]
+  },
+  "versions": {
+    "v050": {
+      "startupMs": 3262,
+      "privateBytes": 221171712,
+      "workingSet": 449433600
+    },
+    "v060": {
+      "startupMs": 3329,
+      "privateBytes": 221085696,
+      "workingSet": 455421952
+    }
+  },
+  "percentChange": {
+    "startupMs": 2.053954629061927,
+    "privateBytes": -0.038891049502753905,
+    "workingSet": 1.3324219640009183
+  }
+}

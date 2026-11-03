@@ -499,7 +499,7 @@ export function SettingsView({
             </section>
             <section className="settings-section">
               <div><h2>Uninstall launcher</h2><p>Manage this installation through Windows.</p></div>
-              <div className="settings-panel data-panel"><strong>Remove Wrakeeb Launcher</strong><p>Open Windows Installed apps, then select Wrakeeb Launcher → Uninstall. For a portable copy, exit the launcher and remove its folder. Independently installed applications remain in their own folders.</p><button className="btn btn-sm" disabled={busy || !desktop} onClick={uninstallLauncher}>Open Windows uninstall settings</button></div>
+              <div className="settings-panel data-panel"><strong>Remove Wrakeeb Launcher Claude Edition</strong><p>Open Windows Installed apps, then select Wrakeeb Launcher Claude Edition → Uninstall. For a portable copy, exit the launcher and remove its folder. Independently installed applications remain in their own folders.</p><button className="btn btn-sm" disabled={busy || !desktop} onClick={uninstallLauncher}>Open Windows uninstall settings</button></div>
             </section>
             <section className="settings-section">
               <div>

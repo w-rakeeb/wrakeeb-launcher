@@ -12,7 +12,7 @@
 
 ## Baseline
 
-Five fresh-process/fresh-WebView2-profile runs of the preserved production v0.5.0 binary, isolated empty library, startup scanning and update checks disabled. Startup is process spawn to first rendered page heading via local CDP; it includes harness overhead. Idle is measured 1.5 seconds later across the entire native+WebView2 process tree. OS file caches were not flushed, so this is not an OS-cold disk benchmark.
+Five fresh-process/fresh-WebView2-profile runs of the preserved production v0.5.0 binary, isolated empty saved link/activity records (built-in local detection remained active), startup scanning and update checks disabled. Startup is process spawn to first rendered page heading via local CDP; it includes harness overhead. Idle is measured 1.5 seconds later across the entire native+WebView2 process tree. OS file caches were not flushed, so this is not an OS-cold disk benchmark.
 
 Median startup 954 ms; private bytes 215,285,760 (205.3 MiB); working set 415,354,880 (396.1 MiB); executable 15,113,728 bytes. Initial minified JS+CSS 496,876 bytes. Lazy license chunk is 1,149,966 bytes and is not startup code. Baseline samples are under the original project's runtime/performance/baseline-v050/metrics.json.
 

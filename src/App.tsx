@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   Activity as ActivityIcon,
   ArrowDownToLine,
@@ -39,12 +39,13 @@ import {
 import { command, desktop, getSnapshot, savePreferences } from "./bridge";
 import { AppArtwork, AppGlyph, ProjectGallery } from "./AppArtwork";
 const SettingsView = lazy(() => import("./SettingsView").then(module => ({ default: module.SettingsView })));
-import { accessibleAccent, luminance } from "./preferences";
+import { accessibleAccent, accentForeground } from "./preferences";
 import { UpdateView, bytes } from "./UpdateView";
 
 import { APP_VERSION, useLauncherUpdates } from "./useLauncherUpdates";
 import brandLogo from "./assets/brand/wrakeeb.png";
 import { usePackages, type PackageController } from "./usePackages";
+import { noticePages } from "./notices";
 import type { PaletteAction } from "./CommandPalette";
 const CommandPalette = lazy(() => import("./CommandPalette"));
 const ActivityTimeline = lazy(() => import("./ActivityTimeline"));
@@ -125,7 +126,7 @@ export function App() {
     for (const token of ["--color-primary-content", "--color-accent-content"]) {
       if (customAccent || colors[accent]) {
         const color = accessibleAccent(customAccent || colors[accent], snapshot?.store.preferences.theme ?? "discord");
-        document.documentElement.style.setProperty(token, luminance(color) > .179 ? "#111318" : "#ffffff");
+        document.documentElement.style.setProperty(token, accentForeground(color));
       }
       else document.documentElement.style.removeProperty(token);
     }
@@ -162,6 +163,8 @@ export function App() {
   const [removeId, setRemoveId] = useState<string>();
   const [help, setHelp] = useState(false);
   const [legalNotices, setLegalNotices] = useState<string>();
+  const [noticePage, setNoticePage] = useState(0);
+  const legalPages = useMemo(() => noticePages(legalNotices ?? "Open to load the bundled notices."), [legalNotices]);
   const [settingsSaved, setSettingsSaved] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const scanned = useRef(false);
@@ -549,6 +552,7 @@ export function App() {
             <CircleHelp size={18} aria-hidden="true" />
             <span>About & help</span>
           </button>
+          {updates.status.stage === "available" && <button className="footer-update" title="Launcher update available" onClick={() => navigate("updates")}>Launcher update available</button>}
           <div className="build-info">
             <span className="build-dot" />
             <span className="connection-state">{online ? "Online" : "Offline"}</span><span>{APP_VERSION}</span>
@@ -896,7 +900,7 @@ export function App() {
                                 <AppGlyph app={app} size={25} />
                                 <span>{app.name}</span>
                               </button>
-                              <button className="card-options" aria-label={`Options for ${app.name}`} onClick={event => { const box = event.currentTarget.getBoundingClientRect(); setContext({ id: app.id, x: box.right, y: box.bottom }); }}><MoreHorizontal size={17} /></button>
+                              <button className="card-options" aria-haspopup="menu" aria-expanded={context?.id === app.id} aria-label={`Options for ${app.name}`} onClick={event => { const box = event.currentTarget.getBoundingClientRect(); setContext({ id: app.id, x: box.right, y: box.bottom }); }}><MoreHorizontal size={17} /></button>
                               {app.linked && (
                                 <button
                                   className="favorite-button"
@@ -1139,7 +1143,7 @@ export function App() {
                       "Activity history cleared. Previous-state backups are retained.",
                     )
                   }
-                  uninstallLauncher={() => void perform("uninstall-launcher", () => command("open_windows_uninstall"), "Windows Installed apps opened. Choose Wrakeeb Launcher to uninstall. Portable copies can be removed from their folder after exiting.")}
+                  uninstallLauncher={() => void perform("uninstall-launcher", () => command("open_windows_uninstall"), "Windows Installed apps opened. Choose Wrakeeb Launcher Claude Edition to uninstall. Portable copies can be removed from their folder after exiting.")}
                   createShortcut={() =>
                     void perform(
                       "desktop-shortcut",
@@ -1275,7 +1279,8 @@ export function App() {
             >
               Third-party license notices
             </summary>
-            <pre>{legalNotices ?? "Open to load the bundled notices."}</pre>
+            {legalNotices && <div className="notice-pagination"><label>Notice page<select className="select select-sm" aria-label="License notice page" value={noticePage} onChange={e => setNoticePage(Number(e.target.value))}>{legalPages.map((_,index) => <option key={index} value={index}>{index + 1} of {legalPages.length}</option>)}</select></label><button className="btn btn-sm" disabled={noticePage === 0} onClick={() => setNoticePage(page => page - 1)}>Previous</button><button className="btn btn-sm" disabled={noticePage === legalPages.length - 1} onClick={() => setNoticePage(page => page + 1)}>Next</button><button className="btn btn-sm btn-ghost" disabled={!desktop} onClick={() => void perform("notices", () => command("open_notice_file"))}>Open complete notice file</button></div>}
+            <pre>{legalPages[Math.min(noticePage, legalPages.length - 1)]}</pre>
           </details>
           <div className="modal-action">
             <form method="dialog">

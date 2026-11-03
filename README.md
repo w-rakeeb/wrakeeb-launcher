@@ -102,3 +102,10 @@ Equal-size library cards use existing project screenshots. Appearance settings i
 Project options include Uninstall for versions installed by this launcher: the exact receipt-validated version folder moves to the Windows Recycle Bin. Downloads, older version folders and separately stored profiles remain in place. Data stored inside that version folder moves with it. Linked apps can be removed from the library without deleting files. Settings → General opens Windows uninstall settings for the launcher; portable copies can be removed after exit.
 
 Validation: 4 catalog tests, 20 Rust tests, 13 browser tests, plus an isolated production-binary test of a live GitHub demo download, separate destination, installation, recycle uninstall, preserved older version/download/profile, visible close button and About scrolling. No real user application was uninstalled. The license text is loaded on demand; its roughly 1 MB content produces an intentionally large scroll range.
+## Local experimental Claude edition — 0.6.0
+
+This branch is a separate implementation of the supplied Claude brief. The main worktree at D:\Codex\Wrakeeb Launcher remains v0.5.0 and is the immediate fallback. The original v0.4.0 binary/data backup is retained there. This edition has its own application identity, data directory and optional installer; app executables/profiles remain at their existing paths.
+
+Use npm run dev / npm run desktop with port 1421. This worktree currently shares the existing node_modules through a Windows junction; npm ci can replace that with a standalone installation if the worktree is moved. Rust target caches were shared for building, but each release folder contains its own executable. No new dependency was added.
+
+See docs/CLAUDE-EDITION-AUDIT.md and docs/VERIFICATION-v0.6.0.md for scope, phases, checks and remaining backend work. The license viewer is paged to avoid a megabyte-long layout; all notices are preserved and available as a complete file.

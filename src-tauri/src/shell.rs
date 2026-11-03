@@ -130,9 +130,12 @@ pub async fn create_application_shortcut(id: String, app: tauri::AppHandle) -> R
         let target = crate::launchable(std::path::Path::new(&linked.path))?;
         let name: String = linked.name.chars().filter(|c| !c.is_control() && !r#"<>:\"/\|?*"#.contains(*c)).take(100).collect();
         if name.trim().is_empty() { return Err("The application has no valid shortcut name.".into()); }
+        let is_powershell = target.extension().is_some_and(|extension| extension.eq_ignore_ascii_case("ps1"));
+        let runner = if is_powershell { crate::windows_tool("WindowsPowerShell/v1.0/powershell.exe")? } else { target.clone() };
+        let arguments = if is_powershell { format!(r#"-NoProfile -File "{}""#, target.display()) } else { String::new() };
         let mut process = std::process::Command::new(crate::windows_tool("WindowsPowerShell/v1.0/powershell.exe")?);
-        process.args(["-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; $p=Join-Path ([Environment]::GetFolderPath('Desktop')) ($env:WRAKEEB_SHORTCUT_NAME+'.lnk'); if(Test-Path -LiteralPath $p){throw 'A shortcut with this name already exists'}; $s=New-Object -ComObject WScript.Shell; $l=$s.CreateShortcut($p); $l.TargetPath=$env:WRAKEEB_SHORTCUT_TARGET; $l.WorkingDirectory=[IO.Path]::GetDirectoryName($env:WRAKEEB_SHORTCUT_TARGET); $l.IconLocation=$env:WRAKEEB_SHORTCUT_TARGET+',0'; $l.Save()"])
-            .env("WRAKEEB_SHORTCUT_TARGET", target).env("WRAKEEB_SHORTCUT_NAME", name);
+        process.args(["-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; $p=Join-Path ([Environment]::GetFolderPath('Desktop')) ($env:WRAKEEB_SHORTCUT_NAME+'.lnk'); if(Test-Path -LiteralPath $p){throw 'A shortcut with this name already exists'}; $s=New-Object -ComObject WScript.Shell; $l=$s.CreateShortcut($p); $l.TargetPath=$env:WRAKEEB_SHORTCUT_RUNNER; $l.Arguments=$env:WRAKEEB_SHORTCUT_ARGUMENTS; $l.WorkingDirectory=[IO.Path]::GetDirectoryName($env:WRAKEEB_SHORTCUT_TARGET); $l.IconLocation=$env:WRAKEEB_SHORTCUT_TARGET+',0'; $l.Save()"])
+            .env("WRAKEEB_SHORTCUT_TARGET", target).env("WRAKEEB_SHORTCUT_NAME", name).env("WRAKEEB_SHORTCUT_RUNNER", runner).env("WRAKEEB_SHORTCUT_ARGUMENTS", arguments);
         #[cfg(windows)] { use std::os::windows::process::CommandExt; process.creation_flags(0x08000000); }
         if !process.status().map_err(|e| e.to_string())?.success() { return Err("Windows could not create the shortcut, or that name already exists.".into()); }
         Ok(())
@@ -188,4 +191,13 @@ pub fn storage_capacity(app: tauri::AppHandle) -> Result<serde_json::Value, Stri
         return Ok(serde_json::json!({ "available": available, "total": total }));
     }
     #[cfg(not(windows))] { let _ = path; Err("Disk capacity is available on Windows.".into()) }
+}
+
+#[tauri::command]
+pub fn open_notice_file(app: tauri::AppHandle) -> Result<(), String> {
+    let portable = std::env::current_exe().map_err(|e| e.to_string())?.parent().ok_or("Application folder unavailable")?.join("THIRD-PARTY-NOTICES.txt");
+    let path = if portable.is_file() { portable } else { app.path().resource_dir().map_err(|e| e.to_string())?.join("THIRD-PARTY-NOTICES.txt") };
+    if !path.is_file() { return Err("The notice file is missing. Use the notice pages above.".into()); }
+    std::process::Command::new(crate::windows_tool("notepad.exe")?).arg(path).spawn().map_err(|e| e.to_string())?;
+    Ok(())
 }

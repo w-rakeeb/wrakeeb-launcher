@@ -101,3 +101,58 @@ test("About has one working scroll area through the license notices", async ({ p
 
 
 
+
+test("command palette, context menu and remembered list controls work together", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", {name:"Your library",exact:true})).toBeVisible();
+  await page.keyboard.press("Control+k");
+  await expect(page.getByRole("dialog", { name: "Command palette" })).toBeVisible();
+  await page.getByRole("combobox", { name: "Search commands and applications" }).fill("Open Settings");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "Library", exact: true }).click();
+  await page.getByLabel("Default library view", { exact: true }).selectOption("list");
+  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await expect(page.locator(".apps-list")).toBeVisible();
+  await page.locator(".app-item").first().click({ button: "right" });
+  await expect(page.getByRole("menu", { name: /actions/ })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Details", exact: true }).click();
+  await expect(page.locator(".project-details")).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".apps-list")).toBeVisible();
+});
+
+test("settings search, valid custom accents, reset and import confirmation are wired", async ({ page }) => {
+  await page.goto("/#settings");
+  await page.getByLabel("Search settings", { exact: true }).fill("accent");
+  await expect(page.getByRole("heading", { name: "Theme", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Library & motion", exact: true })).not.toBeVisible();
+  await page.getByLabel("Custom accent", { exact: true }).fill("invalid");
+  await expect(page.getByRole("button", { name: "Apply color", exact: true })).toBeDisabled();
+  await page.getByLabel("Custom accent", { exact: true }).fill("#ffffff");
+  await page.getByRole("button", { name: "Apply color", exact: true }).click();
+  expect(await page.evaluate(() => (window as any).qaCalls.filter((c: any) => c.name === "save_preferences").at(-1).args.preferences.customAccent)).toBe("#ffffff");
+  await page.getByLabel("Search settings", { exact: true }).fill("");
+  await page.getByRole("tab", { name: "Advanced", exact: true }).click();
+  await page.getByRole("button", { name: "Import preferences…", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Choose import file", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).qaCalls.some((c: any) => c.name === "import_preferences"))).toBe(false);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page.getByRole("button", { name: "Reset all preferences…", exact: true }).click();
+  await page.getByRole("button", { name: "Confirm reset preferences", exact: true }).click();
+  expect(await page.evaluate(() => (window as any).qaCalls.filter((c: any) => c.name === "save_preferences").at(-1).args.preferences.customAccent)).toBe(null);
+});
+
+
+test("motion uses only transform and opacity within the agreed duration budget", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Your library", exact: true })).toBeVisible();
+  for (const selector of [".app-item", ".modal", ".modal-box", ".btn"]) {
+    const style = await page.locator(selector).first().evaluate(el => ({ properties: getComputedStyle(el).transitionProperty.split(",").map(p => p.trim()), durations: getComputedStyle(el).transitionDuration.split(",").map(d => parseFloat(d) * 1000), animation: getComputedStyle(el).animationName }));
+    expect(style.properties.every(property => ["transform", "opacity"].includes(property))).toBe(true);
+    expect(style.durations.every(duration => duration >= 120 && duration <= 200)).toBe(true);
+    expect(style.animation).toBe("none");
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  expect(await page.locator(".app-item").first().evaluate(el => getComputedStyle(el).transitionDuration)).toBe("0s");
+});

@@ -76,9 +76,22 @@ it("installed/linked filters and size/addition sorts use real app records", () =
   expect(filterApps(apps, "", "Not installed", "name").every(a => !a.linked && !a.available)).toBe(true);
 });
 
-import { accessibleAccent, contrast } from "../src/preferences";
+import { accessibleAccent, accentForeground, contrast } from "../src/preferences";
 it("custom and preset accents retain AA text contrast against each theme", () => {
   for (const [theme,background] of [["discord","#1d1f23"],["graphite","#242629"],["midnight","#1c2633"],["obsidian","#101113"],["light","#ffffff"]]) {
     for (const requested of ["#ffffff","#000000","#4055d6","#ed776a","#087f72"]) expect(contrast(accessibleAccent(requested, theme),background)).toBeGreaterThanOrEqual(4.5);
   }
+});
+
+import { noticePages } from "../src/notices";
+it("notice paging preserves every byte and line across boundaries", () => {
+  const original = "Copyright · notice\n".repeat(3000);
+  const pages = noticePages(original);
+  expect(pages.length).toBeGreaterThan(1);
+  expect(pages.join("")).toBe(original);
+  expect(pages.every(page => page.length <= 14000)).toBe(true);
+});
+
+it("custom accent buttons keep AA foreground contrast at the light/dark crossover", () => {
+  for (const hex of ["#767676", "#777777", "#000000", "#ffffff", "#ed776a"]) expect(contrast(hex, accentForeground(hex))).toBeGreaterThanOrEqual(4.5);
 });
