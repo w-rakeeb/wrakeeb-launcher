@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
+import { InterfaceStyleContext } from "./interfaceStyle";
 import {
   Code2,
   Expand,
@@ -45,8 +46,11 @@ export function AppGlyph({
 
 const artworkColors = new Map<string, string>();
 export function AppArtwork({ app }: { app: CatalogApp }) {
+  const interfaceStyle = useContext(InterfaceStyleContext);
+  const [failedPreview, setFailedPreview] = useState<string>();
   const [color, setColor] = useState("#343943");
   useEffect(() => {
+    if (interfaceStyle !== "claude") return;
     const source = app.logo;
     if (!source) return;
     let active = true;
@@ -63,9 +67,17 @@ export function AppArtwork({ app }: { app: CatalogApp }) {
         const value = count ? `rgb(${Math.round(red / count)} ${Math.round(green / count)} ${Math.round(blue / count)})` : "#343943";
         artworkColors.set(source, value); if (active) setColor(value);
       } catch { /* Neutral covers remain usable if an image cannot be sampled. */ }
-    }; image.src = source;
-    return () => { active = false; };
-  }, [app.logo]);
+    };
+    // Sampling can trigger image decode/readback. Let the shell paint first.
+    const timer = window.setTimeout(() => { image.src = source; }, 300);
+    return () => { active = false; window.clearTimeout(timer); image.onload = null; };
+  }, [app.logo, interfaceStyle]);
+  if (interfaceStyle === "classic") {
+    const preview = app.images?.[0];
+    return <div className={`app-art project-art project-brand-cover ${preview && failedPreview !== preview.src ? "has-preview" : ""}`}>
+      {preview && failedPreview !== preview.src ? <><img className="card-preview" src={preview.src} alt="" loading="lazy" decoding="async" onError={() => setFailedPreview(preview.src)} /><span className="cover-app-mark"><AppGlyph app={app} size={30} /></span></> : <AppGlyph app={app} size={72} />}
+    </div>;
+  }
   return <div className="app-art project-art project-brand-cover" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 18%, var(--color-base-200)), var(--color-base-100))` }}><AppGlyph app={app} size={72} /></div>;
 }
 

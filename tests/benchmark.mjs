@@ -5,7 +5,7 @@ import { resolve, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 const source=resolve(process.argv[2]);const label=process.argv[3]||'baseline';const samples=Number(process.argv[4]||5);const root=resolve('runtime/performance',label);await mkdir(root,{recursive:true});const results=[];
 for(let i=0;i<samples;i++){
- const dir=join(root,`sample-${i+1}`);await mkdir(join(dir,'data'),{recursive:true});const exe=join(dir,'Wrakeeb Launcher.exe');await copyFile(source,exe);await writeFile(join(dir,'data/library.json'),JSON.stringify({schema:1,apps:[],activity:[],installations:[],preferences:{theme:'discord',checkUpdatesOnStart:false,scanOnStart:false,rememberPage:false,reduceMotion:true}}));
+ const dir=join(root,`sample-${i+1}`);await mkdir(join(dir,'data'),{recursive:true});const exe=join(dir,'Wrakeeb Launcher.exe');await copyFile(source,exe);await writeFile(join(dir,'data/library.json'),JSON.stringify({schema:1,apps:[],activity:[],installations:[],preferences:{interfaceStyle:process.env.WRAKEEB_BENCHMARK_INTERFACE==='claude'?'claude':'classic',theme:'discord',checkUpdatesOnStart:false,scanOnStart:false,rememberPage:false,reduceMotion:true}}));
  const start=performance.now();const child=spawn(exe,[],{cwd:dir,windowsHide:true,stdio:'ignore',env:{...process.env,WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--remote-debugging-address=127.0.0.1 --remote-debugging-port=19438'}});let browser;
  try{
  for(let j=0;j<200;j++){try{browser=await chromium.connectOverCDP('http://127.0.0.1:19438'); if (!browser.contexts()[0]?.pages()[0]) { await browser.close(); browser=undefined; throw Error('Target not ready'); } break;}catch{await new Promise(r=>setTimeout(r,25));}}

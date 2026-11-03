@@ -1,4 +1,8 @@
-# Current status — 0.4.0
+# Current local development status — 0.6.1
+
+The upgrade is consolidated into one Wrakeeb Launcher app. Original and Claude designs are selectable in Settings → Appearance, sharing the same library, color themes and backend. See [handoff and chat context](../HANDOFF.md) and [current verification](VERIFICATION-v0.6.1.md).
+
+The following section records the earlier published 0.4.0 baseline and its recipient-machine limitations.
 
 Windows x64 desktop launcher with native tray, local libraries, GitHub releases, verified project downloads, portable installation and explicit independent launch. Catalog supports applications, scripts and source/direct-download entries.
 

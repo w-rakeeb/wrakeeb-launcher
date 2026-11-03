@@ -196,6 +196,7 @@ export interface Preferences {
   theme?: "discord" | "wrakeeb" | "slate" | "light" | "obsidian" | "midnight" | "graphite";
   customOrder?: string[];
   customAccent?: string | null;
+  interfaceStyle?: "classic" | "claude";
   sidebarCollapsed?: boolean;
   libraryView?: "grid" | "list";
   libraryFilter?: string;

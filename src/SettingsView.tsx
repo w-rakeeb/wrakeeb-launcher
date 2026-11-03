@@ -64,7 +64,7 @@ export function SettingsView({
     if (!search.trim()) return;
     const term = search.toLowerCase();
     const choices = [
-      ["appearance", "theme color accent text size compact motion density"],
+      ["appearance", "theme interface design original claude color accent text size compact motion density"],
       ["library", "library view sort filter card size linked"],
       ["downloads", "download install storage disk location folder package verification"],
       ["general", "window tray close minimize startup scan desktop shortcut notification about uninstall"],
@@ -75,7 +75,7 @@ export function SettingsView({
   }, [search]);
   useEffect(() => { const sections = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(".settings-section") ?? []); sections.forEach(section => { section.hidden = !!search.trim() && !section.textContent?.toLowerCase().includes(search.trim().toLowerCase()); }); setHasSearchMatch(sections.some(section => !section.hidden)); }, [tab, search]);
   const validAccent = !accentInput || /^#[0-9a-f]{6}$/i.test(accentInput);
-  const diagnostics = JSON.stringify({ application: "Wrakeeb Launcher Claude Edition", version: APP_VERSION, platform: navigator.platform, theme: prefs.theme, linkedApps: snapshot.store.apps.length, managedInstallations: snapshot.store.installations?.length ?? 0, activityRecords: snapshot.store.activity.length, online: navigator.onLine, dataStorage: "Local files; paths omitted from diagnostics", telemetry: false }, null, 2);
+  const diagnostics = JSON.stringify({ application: "Wrakeeb Launcher", version: APP_VERSION, platform: navigator.platform, theme: prefs.theme, linkedApps: snapshot.store.apps.length, managedInstallations: snapshot.store.installations?.length ?? 0, activityRecords: snapshot.store.activity.length, online: navigator.onLine, dataStorage: "Local files; paths omitted from diagnostics", telemetry: false }, null, 2);
   return (
     <div className="settings-content">
       <div className="settings-intro"><div><h2>Your launcher. Your workspace.</h2><p>Preferences apply instantly and stay on this PC.</p></div><label className="input settings-search"><Search size={16} /><input type="search" aria-label="Search settings" placeholder="Find a setting…" value={search} onChange={e => setSearch(e.target.value)} /></label></div>
@@ -139,6 +139,18 @@ export function SettingsView({
       >
         {tab === "appearance" ? (
           <>
+            <section className="settings-section">
+              <div><h2>Interface design</h2><button className="section-reset" disabled={busy || !desktop} onClick={() => change({ interfaceStyle: "classic" })}>Reset to defaults</button><p>Two designs, one library. Switch instantly without changing your apps or color theme.</p></div>
+              <div className="settings-panel interface-gallery" role="group" aria-label="Interface design">
+                {([
+                  ["classic", "Original design", "Familiar neutral controls and project screenshot covers."],
+                  ["claude", "Claude design", "Brand coral, icon gradients and a refined launcher shell."],
+                ] as const).map(([id, name, description]) => <button key={id} className={`theme-choice interface-choice ${id === (prefs.interfaceStyle ?? "classic") ? "selected" : ""}`} aria-pressed={id === (prefs.interfaceStyle ?? "classic")} disabled={busy || !desktop} onClick={() => change({ interfaceStyle: id })}>
+                  <span className={`interface-preview preview-${id}`} aria-hidden="true"><i /><span><b /><span><i /><i /><i /></span></span></span>
+                  <strong>{name}{id === (prefs.interfaceStyle ?? "classic") ? <Check size={14} aria-hidden="true" /> : null}</strong><small>{description}</small>
+                </button>)}
+              </div>
+            </section>
             <section className="settings-section">
               <div>
                 <h2>Theme</h2><button className="section-reset" disabled={busy || !desktop} onClick={() => change({theme:"discord",accent:"default",customAccent:null})}>Reset to defaults</button>
@@ -499,7 +511,7 @@ export function SettingsView({
             </section>
             <section className="settings-section">
               <div><h2>Uninstall launcher</h2><p>Manage this installation through Windows.</p></div>
-              <div className="settings-panel data-panel"><strong>Remove Wrakeeb Launcher Claude Edition</strong><p>Open Windows Installed apps, then select Wrakeeb Launcher Claude Edition → Uninstall. For a portable copy, exit the launcher and remove its folder. Independently installed applications remain in their own folders.</p><button className="btn btn-sm" disabled={busy || !desktop} onClick={uninstallLauncher}>Open Windows uninstall settings</button></div>
+              <div className="settings-panel data-panel"><strong>Remove Wrakeeb Launcher</strong><p>Open Windows Installed apps, then select Wrakeeb Launcher → Uninstall. For a portable copy, exit the launcher and remove its folder. Independently installed applications remain in their own folders.</p><button className="btn btn-sm" disabled={busy || !desktop} onClick={uninstallLauncher}>Open Windows uninstall settings</button></div>
             </section>
             <section className="settings-section">
               <div>

@@ -1,5 +1,7 @@
 # Wrakeeb Launcher — completed upgrade
 
+> Historical 0.6.0 prototype report, superseded on 3 November 2026. The user's latest direction is one shared app with switchable designs. See [HANDOFF.md](../HANDOFF.md); no separate Claude edition is active.
+
 Two independent versions are ready. **v0.5.0** completes the original fixes and remains the fallback. **v0.6.0 Claude Edition** implements the supplied brief in a separate folder, branch, Windows app identity, executable, optional installer and data store. Your original library file was verified unchanged. The pre-change v0.4.0 binary/data backup is retained.
 
 ## What changed

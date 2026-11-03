@@ -3,7 +3,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { onSecondMonitor } from './second-monitor.mjs';
-const out=resolve('runtime/shipping-screenshots');await mkdir(out,{recursive:true});const child=spawn(resolve('release/Wrakeeb Launcher Claude Edition.exe'),[],{cwd:resolve('release'),stdio:'ignore',windowsHide:true,env:{...process.env,WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--remote-debugging-address=127.0.0.1 --remote-debugging-port=19439'}});onSecondMonitor(child.pid);
+const out=resolve('runtime/shipping-screenshots');await mkdir(out,{recursive:true});const child=spawn(resolve('release/Wrakeeb Launcher.exe'),[],{cwd:resolve('release'),stdio:'ignore',windowsHide:true,env:{...process.env,WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--remote-debugging-address=127.0.0.1 --remote-debugging-port=19439'}});onSecondMonitor(child.pid);
 let browser;const pause=ms=>new Promise(r=>setTimeout(r,ms));
 try{for(let i=0;i<160;i++){try{browser=await chromium.connectOverCDP('http://127.0.0.1:19439');if(!browser.contexts()[0]?.pages()[0])throw Error('Target not ready');break;}catch{await pause(100);}}const page=browser.contexts()[0].pages()[0];const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.locator('.page-heading h1').waitFor();execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-File',resolve('tests/resize-native-window.ps1'),'-AppProcessId',String(child.pid)],{windowsHide:true,stdio:'pipe'});await expect.poll(()=>page.evaluate(()=>innerWidth)).toBe(1280);
 const dismiss=async()=>{const notice=page.getByRole('button',{name:'Dismiss notification',exact:true});if(await notice.count())await notice.click();};

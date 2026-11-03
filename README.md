@@ -1,6 +1,6 @@
 # Wrakeeb Launcher
 
-Applications, scripts and utilities in one Windows desktop library. Version **0.4.0** improves discovery, direct downloads, tray behavior and project details.
+Applications, scripts and utilities in one Windows desktop library. **Local development version 0.6.1** integrates the upgrade into one app with selectable Original and Claude designs. Read [the chat handoff](HANDOFF.md) before continuing work. The published 0.4.0 release remains separate from this local upgrade.
 
 ## Install on your PC
 
@@ -102,10 +102,8 @@ Equal-size library cards use existing project screenshots. Appearance settings i
 Project options include Uninstall for versions installed by this launcher: the exact receipt-validated version folder moves to the Windows Recycle Bin. Downloads, older version folders and separately stored profiles remain in place. Data stored inside that version folder moves with it. Linked apps can be removed from the library without deleting files. Settings → General opens Windows uninstall settings for the launcher; portable copies can be removed after exit.
 
 Validation: 4 catalog tests, 20 Rust tests, 13 browser tests, plus an isolated production-binary test of a live GitHub demo download, separate destination, installation, recycle uninstall, preserved older version/download/profile, visible close button and About scrolling. No real user application was uninstalled. The license text is loaded on demand; its roughly 1 MB content produces an intentionally large scroll range.
-## Local experimental Claude edition — 0.6.0
+## Unified design upgrade — 0.6.1
 
-This branch is a separate implementation of the supplied Claude brief. The main worktree at D:\Codex\Wrakeeb Launcher remains v0.5.0 and is the immediate fallback. The original v0.4.0 binary/data backup is retained there. This edition has its own application identity, data directory and optional installer; app executables/profiles remain at their existing paths.
+The Claude brief is integrated into this app. Settings → Appearance → Interface design switches between Original design and Claude design. Color themes and accent choices work with both. All features, library entries and storage paths are shared. Existing users default to Original design.
 
-Use npm run dev / npm run desktop with port 1421. This worktree currently shares the existing node_modules through a Windows junction; npm ci can replace that with a standalone installation if the worktree is moved. Rust target caches were shared for building, but each release folder contains its own executable. No new dependency was added.
-
-See docs/CLAUDE-EDITION-AUDIT.md and docs/VERIFICATION-v0.6.0.md for scope, phases, checks and remaining backend work. The license viewer is paged to avoid a megabyte-long layout; all notices are preserved and available as a complete file.
+The separate prototype is archived under Backups/2026-11-03-consolidation. Use the canonical project at D:/Codex/Wrakeeb Launcher, dev port 1420 and the original com.wrakeeb.launcher identity. See HANDOFF.md for chat references, implementation history, rollback and remaining backend limits. Historical 0.6.0 audit and verification reports describe the prototype before consolidation.

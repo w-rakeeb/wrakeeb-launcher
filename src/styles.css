@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@source not "../Backups";
+@source not "../runtime";
+@source not "../work";
 @plugin "daisyui" {
   themes: false;
   logs: false;

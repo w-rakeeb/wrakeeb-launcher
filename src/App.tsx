@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { InterfaceStyleContext } from "./interfaceStyle";
 import {
   Activity as ActivityIcon,
   ArrowDownToLine,
@@ -108,6 +109,7 @@ export function App() {
       : undefined,
   );
   useEffect(() => {
+    document.documentElement.dataset.interface = snapshot?.store.preferences.interfaceStyle === "claude" ? "claude" : "classic";
     document.documentElement.dataset.theme =
       snapshot?.store.preferences.theme ?? "discord";
     const accent = snapshot?.store.preferences.accent ?? "default";
@@ -130,7 +132,7 @@ export function App() {
       }
       else document.documentElement.style.removeProperty(token);
     }
-  }, [snapshot?.store.preferences.theme, snapshot?.store.preferences.accent, snapshot?.store.preferences.customAccent]);
+  }, [snapshot?.store.preferences.theme, snapshot?.store.preferences.accent, snapshot?.store.preferences.customAccent, snapshot?.store.preferences.interfaceStyle]);
   const [page, setPage] = useState<Page>(readPage);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -415,6 +417,7 @@ export function App() {
   const recentApps = filterApps(collection.filter(a => a.linked?.lastLaunched && !a.missing), "", "All apps", "recent").slice(0, 4);
 
   return (
+    <InterfaceStyleContext.Provider value={snapshot?.store.preferences.interfaceStyle === "claude" ? "claude" : "classic"}>
     <div
       className={`launcher ${snapshot?.store.preferences.sidebarCollapsed ? "rail-collapsed" : ""} ${snapshot?.store.preferences.compact ? "compact" : ""} ${snapshot?.store.preferences.reduceMotion ? "reduce-motion" : ""} ${snapshot?.store.preferences.largeText ? "large-text" : ""}`}
     >
@@ -1143,7 +1146,7 @@ export function App() {
                       "Activity history cleared. Previous-state backups are retained.",
                     )
                   }
-                  uninstallLauncher={() => void perform("uninstall-launcher", () => command("open_windows_uninstall"), "Windows Installed apps opened. Choose Wrakeeb Launcher Claude Edition to uninstall. Portable copies can be removed from their folder after exiting.")}
+                  uninstallLauncher={() => void perform("uninstall-launcher", () => command("open_windows_uninstall"), "Windows Installed apps opened. Choose Wrakeeb Launcher to uninstall. Portable copies can be removed from their folder after exiting.")}
                   createShortcut={() =>
                     void perform(
                       "desktop-shortcut",
@@ -1293,6 +1296,7 @@ export function App() {
         </form>
       </dialog>
     </div>
+    </InterfaceStyleContext.Provider>
   );
 }
 

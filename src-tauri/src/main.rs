@@ -34,6 +34,7 @@ struct Preferences {
     reduce_motion: bool,
     remember_page: bool,
     theme: String,
+    interface_style: String,
     download_directory: Option<String>,
     check_updates_on_start: bool,
     install_directory: Option<String>,
@@ -62,6 +63,7 @@ impl Default for Preferences {
             reduce_motion: false,
             remember_page: true,
             theme: "discord".into(),
+            interface_style: "classic".into(),
             download_directory: None,
             check_updates_on_start: true,
             install_directory: None,
@@ -525,6 +527,9 @@ fn remove_application(id: String, library: State<Library>) -> Result<(), String>
     })
 }
 fn validate_preferences(preferences: &Preferences) -> Result<(), String> {
+    if !["classic", "claude"].contains(&preferences.interface_style.as_str()) {
+        return Err("Choose a supported interface design.".into());
+    }
     if !["discord", "wrakeeb", "slate", "light", "obsidian", "midnight", "graphite"].contains(&preferences.theme.as_str())
         || !["default", "blue", "teal", "red", "amber"].contains(&preferences.accent.as_str())
     {
@@ -624,7 +629,7 @@ fn main() {
                 "main",
                 tauri::WebviewUrl::App("index.html".into()),
             )
-            .title("Wrakeeb Launcher · Claude Edition")
+            .title("Wrakeeb Launcher")
             .inner_size(1280.0, 860.0)
             .min_inner_size(960.0, 600.0)
             .decorations(false)
@@ -832,9 +837,21 @@ mod tests {
     fn legacy_preferences_default_new_fields_without_losing_existing_choices() {
         let prefs: Preferences = serde_json::from_str(r#"{"theme":"slate","compact":true,"closeToTray":true}"#).unwrap();
         assert_eq!(prefs.theme, "slate"); assert!(prefs.compact && prefs.close_to_tray);
+        assert_eq!(prefs.interface_style, "classic");
         assert_eq!(prefs.card_size, 260); assert_eq!(prefs.library_view, "grid"); assert!(prefs.notifications);
         assert!(validate_preferences(&prefs).is_ok());
         let mut invalid = prefs; invalid.custom_accent = Some("#oops!!".into()); assert!(validate_preferences(&invalid).is_err());
+    }
+    #[test]
+    fn interface_design_round_trips_and_rejects_unknown_values() {
+        let mut prefs = Preferences::default();
+        prefs.interface_style = "claude".into();
+        assert!(validate_preferences(&prefs).is_ok());
+        let value = serde_json::to_string(&prefs).unwrap();
+        let restored: Preferences = serde_json::from_str(&value).unwrap();
+        assert_eq!(restored.interface_style, "claude");
+        prefs.interface_style = "unsupported".into();
+        assert!(validate_preferences(&prefs).is_err());
     }
     #[test]
     fn invalid_executable_and_relative_paths_are_rejected() {

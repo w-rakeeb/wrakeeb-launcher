@@ -1,12 +1,12 @@
 {
   "name": "wrakeeb-launcher",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 1421 --strictPort",
+    "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 1421 --strictPort",
+    "preview": "vite preview --host 127.0.0.1 --port 1420 --strictPort",
     "desktop": "tauri dev",
     "package": "tauri build --no-bundle",
     "test": "vitest run tests/catalog.test.ts",

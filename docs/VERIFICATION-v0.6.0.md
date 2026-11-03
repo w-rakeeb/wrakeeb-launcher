@@ -1,5 +1,7 @@
 # Verification notes — Claude edition 0.6.0
 
+> Historical evidence before consolidation. For the current single-app direction, see [HANDOFF.md](../HANDOFF.md) and [0.6.1 verification](VERIFICATION-v0.6.1.md).
+
 ## Completed phases
 
 | Phase | Result |

@@ -23,6 +23,24 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test("interface designs switch independently of themes and preserve the shared library", async ({ page }) => {
+  await page.goto("/#settings");
+  await expect(page.locator("html")).toHaveAttribute("data-interface", "classic");
+  const before = await page.evaluate(() => JSON.parse(localStorage.getItem("premium-fixture") || "null")?.store.apps);
+  await page.getByRole("button", { name: "Midnight theme", exact: true }).click();
+  await page.getByRole("button", { name: /Claude design/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-interface", "claude");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-interface", "claude");
+  await page.getByRole("button", { name: /Original design/ }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-interface", "classic");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
+  const store = await page.evaluate(() => JSON.parse(localStorage.getItem("premium-fixture")!).store);
+  expect(store.apps).toHaveLength(5);
+  if (before) expect(store.apps).toEqual(before);
+});
+
 test("cards stay equal, close stays inside, and drag order survives restart", async ({ page }) => {
   await page.goto("/");
   const cards = page.locator(".app-item");

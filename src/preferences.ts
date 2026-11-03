@@ -1,5 +1,5 @@
 export const preferenceDefaults = {
-  compact: false, reduceMotion: false, rememberPage: true, theme: "discord", accent: "default", customAccent: null,
+  compact: false, reduceMotion: false, rememberPage: true, interfaceStyle: "classic", theme: "discord", accent: "default", customAccent: null,
   sidebarCollapsed: false, libraryView: "grid", libraryFilter: "All apps", librarySort: "name", cardSize: 260,
   hideLinked: false, onboardingComplete: false, notifications: true, closeToTray: false, minimizeToTray: false,
   scanOnStart: true, scanDownloads: true, recordActivity: true, largeText: false, checkUpdatesOnStart: true,

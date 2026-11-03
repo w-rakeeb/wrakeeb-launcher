@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Wrakeeb Launcher Claude Edition",
-  "version": "0.6.0",
-  "identifier": "com.wrakeeb.launcher.claude",
+  "productName": "Wrakeeb Launcher",
+  "version": "0.6.1",
+  "identifier": "com.wrakeeb.launcher",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devUrl": "http://127.0.0.1:1421",
+    "devUrl": "http://127.0.0.1:1420",
     "frontendDist": "../dist"
   },
   "app": {
