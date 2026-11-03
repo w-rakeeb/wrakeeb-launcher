@@ -67,3 +67,67 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media(prefers-reduced-motion:reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 @media(max-width:600px) { main { padding: 20px 16px; } .topbar { padding-inline: 16px; } .caption-title { display: none; } }
+
+/* The user's Claude brief explicitly calls for restrained icon-derived cover gradients. */
+.apps-grid { grid-template-columns: repeat(auto-fill, minmax(min(var(--card-size,260px),100%),1fr)); gap: 20px; }
+.apps-grid .app-item { content-visibility: auto; contain-intrinsic-size: auto 320px; }
+.apps-grid .project-brand-cover { height: 148px; min-height: 148px; border-bottom: 1px solid var(--rule); }
+.apps-grid .app-item:hover { transform: translateY(-2px); border-color: var(--color-accent); }
+.apps-grid .app-card-content { padding: 16px; }
+.apps-grid .app-tagline { min-height: 0; margin: 8px 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.app-title { font-size: 14px; }
+.card-options { display: grid; place-items: center; width: 26px; height: 26px; color: var(--muted); margin-left: auto; border-radius: 5px; }
+.card-options:hover { background: var(--surface-3); }
+.favorite-button { margin-left: 0; }
+.card-metadata { display: flex; gap: 10px; color: var(--text-muted); font-size: 11px; margin-bottom: 16px; }
+.card-metadata .last-used { display: none; }
+.app-status { display: inline-flex; border: 1px solid var(--rule); border-radius: 5px; padding: 3px 6px; font-size: 10px; line-height: 1.3; }
+.app-bottom .btn { padding-inline: 12px; }
+.card-size-control { display: flex; align-items: center; gap: 8px; width: 132px; font-size: 11px; color: var(--muted); }
+.card-size-control .range { width: 62px; height: 12px; color: var(--color-accent); }
+.collection-toolbar { flex-wrap: wrap; gap: 12px; }
+.filters { flex-wrap: wrap; }
+.view-tools { margin-left: auto; }
+.apps-list .app-item { display: grid; grid-template-columns: 44px minmax(0,1fr); align-items: center; min-height: 82px; border-width: 0 0 1px; border-radius: 0; overflow: visible; padding: 12px 8px; }
+.apps-list .art-button { width: 38px; }
+.apps-list .project-brand-cover { width: 38px; height: 38px; min-height: 38px; padding: 5px; border-radius: 7px; }
+.apps-list .project-brand-cover .project-logo { width: 28px; height: 28px; }
+.apps-list .project-brand-cover > svg { width: 28px; height: 28px; }
+.apps-list .app-card-content { display: grid; grid-template-columns: minmax(150px,1fr) minmax(160px,1fr) minmax(150px,200px); align-items: center; gap: 16px; padding: 0 10px; }
+.apps-list .app-tagline { display: none; }
+.apps-list .app-title-row { gap: 5px; }
+.apps-list .app-title .project-logo, .apps-list .app-title > svg { display: none; }
+.apps-list .card-metadata { margin: 0; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.apps-list .card-metadata .last-used { display: block; flex-basis: 100%; }
+.apps-list .app-bottom { margin: 0; }
+.recent-shelf { margin-bottom: 28px; }
+.recent-shelf .section-heading { margin-bottom: 12px; }
+.recent-shelf h2 { font-size: 15px; font-weight: 600; }
+.recent-shelf .section-heading > span { font-size: 11px; color: var(--muted); }
+.recent-shelf > div:last-child { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; }
+.recent-app { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--surface-2); text-align: left; }
+.recent-app > span { flex: 1; min-width: 0; }
+.recent-app strong { display: block; font-size: 12px; }
+.recent-app small { color: var(--muted); font-size: 11px; }
+.app-context-menu { position: fixed; z-index: 100; width: 236px; background: var(--surface-2); border: 1px solid var(--rule); box-shadow: var(--shadow-menu); padding: 6px; border-radius: var(--radius-md); }
+.app-context-menu > strong { display: block; padding: 9px 10px; color: var(--muted); font-size: 11px; border-bottom: 1px solid var(--rule); margin-bottom: 4px; }
+.app-context-menu > button { text-align: left; display: block; border-radius: 6px; padding: 8px 10px; font-size: 12px; width: 100%; }
+.app-context-menu > button:hover { background: var(--surface-3); }
+.transfer-button { position: relative; overflow: hidden; }
+.transfer-button .progress { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; }
+.command-dialog { align-items: start; padding-top: min(16vh,130px); }
+.command-box { width: min(620px,calc(100vw - 32px)); max-width: 620px; padding: 0; border: 1px solid var(--rule); border-radius: var(--radius-md); overflow: hidden; }
+.command-search { display: flex; align-items: center; gap: 12px; padding: 20px; border-bottom: 1px solid var(--rule); }
+.command-search input { flex: 1; min-width: 0; outline: none; background: transparent; font-size: 15px; }
+.command-search kbd { font-size: 10px; color: var(--muted); border: 1px solid var(--rule); padding: 3px 5px; border-radius: 4px; }
+.command-results { max-height: 420px; overflow-y: auto; padding: 8px; }
+.command-results button { display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; padding: 10px 12px; border-radius: 6px; gap: 12px; }
+.command-results button[aria-selected="true"] { background: var(--surface-3); }
+.command-results button > span { display: grid; gap: 3px; }
+.command-results small, .command-results button > span > span { font-size: 11px; color: var(--muted); }
+.command-results strong { font-size: 13px; font-weight: 500; }
+.command-box footer { padding: 12px 20px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--rule); }
+.command-box footer > span { float: right; }
+.command-empty { padding: 24px; color: var(--muted); font-size: 13px; }
+@media(max-width:1150px) { .card-size-control { display: none; } .apps-list .app-card-content { grid-template-columns: minmax(120px,1fr) minmax(130px,1fr) minmax(140px,180px); } }
+@media(max-width:700px) { .apps-list .app-card-content { display: flex; flex-wrap: wrap; gap: 10px; } .apps-list .app-title-row { flex: 1 1 100%; } .apps-list .card-metadata { flex: 1; } .apps-list .app-bottom { flex: 1; } .view-tools { flex-wrap: wrap; } }

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   Code2,
   Expand,
@@ -43,14 +43,30 @@ export function AppGlyph({
   return <Icon size={size} strokeWidth={1.7} aria-hidden="true" />;
 }
 
+const artworkColors = new Map<string, string>();
 export function AppArtwork({ app }: { app: CatalogApp }) {
-  const [failed, setFailed] = useState(false);
-  const preview = app.images?.[0];
-  return (
-    <div className={`app-art project-art project-brand-cover ${preview && !failed ? "has-preview" : ""}`}>
-      {preview && !failed ? <><img className="card-preview" src={preview.src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} /><span className="cover-app-mark"><AppGlyph app={app} size={30} /></span></> : <><AppGlyph app={app} size={76} /><strong>{app.name}</strong></>}
-    </div>
-  );
+  const [color, setColor] = useState("#343943");
+  useEffect(() => {
+    const source = app.logo;
+    if (!source) return;
+    let active = true;
+    const cached = artworkColors.get(source);
+    if (cached) { setColor(cached); return; }
+    const image = new Image();
+    image.onload = () => {
+      try {
+        const canvas = document.createElement("canvas"); canvas.width = 12; canvas.height = 12;
+        const context = canvas.getContext("2d", { willReadFrequently: true }); if (!context) return;
+        context.drawImage(image, 0, 0, 12, 12); const pixels = context.getImageData(0, 0, 12, 12).data;
+        let red = 0, green = 0, blue = 0, count = 0;
+        for (let i = 0; i < pixels.length; i += 4) { const high = Math.max(pixels[i], pixels[i + 1], pixels[i + 2]); const low = Math.min(pixels[i], pixels[i + 1], pixels[i + 2]); if (pixels[i + 3] > 160 && high - low > 30 && high > 55) { red += pixels[i]; green += pixels[i + 1]; blue += pixels[i + 2]; count++; } }
+        const value = count ? `rgb(${Math.round(red / count)} ${Math.round(green / count)} ${Math.round(blue / count)})` : "#343943";
+        artworkColors.set(source, value); if (active) setColor(value);
+      } catch { /* Neutral covers remain usable if an image cannot be sampled. */ }
+    }; image.src = source;
+    return () => { active = false; };
+  }, [app.logo]);
+  return <div className="app-art project-art project-brand-cover" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 18%, var(--color-base-200)), var(--color-base-100))` }}><AppGlyph app={app} size={72} /></div>;
 }
 
 export function ProjectGallery({ app }: { app: CatalogApp }) {

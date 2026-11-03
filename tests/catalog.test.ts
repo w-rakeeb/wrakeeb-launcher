@@ -68,3 +68,10 @@ it("custom ordering is stable for new entries and does not alter the library", (
   expect(sorted.slice(2).map(a => a.id)).toEqual(original.filter(id => !["two", "stickyn"].includes(id)));
   expect(apps.map(a => a.id)).toEqual(original);
 });
+
+it("installed/linked filters and size/addition sorts use real app records", () => {
+  const apps = appViews(snapshot);
+  expect(filterApps(apps, "", "Linked", "added").map(a => a.id)).toEqual(["two", "dual-discord"]);
+  expect(filterApps(apps, "", "Installed", "name").some(a => a.id === "two")).toBe(false);
+  expect(filterApps(apps, "", "Not installed", "name").every(a => !a.linked && !a.available)).toBe(true);
+});

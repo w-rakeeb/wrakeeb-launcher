@@ -639,6 +639,7 @@ fn main() {
             clear_activity,
             shell::hide_to_tray,
             shell::show_launcher,
+            shell::create_application_shortcut,
             shell::exit_launcher,
             shell::get_shell_status,
             shell::open_storage_directory,

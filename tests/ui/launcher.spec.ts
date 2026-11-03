@@ -16,12 +16,9 @@ test("browser preview: discover, filter, details, help and honest downloads", as
   await expect(page.locator(".app-item")).toHaveCount(2);
   await page.getByRole("button", { name: "All apps", exact: false }).click();
   await page.keyboard.press("Control+k");
-  await expect(
-    page.getByRole("textbox", { name: "Search applications" }),
-  ).toBeFocused();
+  await expect(page.getByRole("combobox", { name: "Search commands and applications" })).toBeFocused();
   await page.keyboard.type("Sticky");
-  await expect(page.locator(".app-item")).toHaveCount(1);
-  await page.getByRole("button", { name: "StickyN", exact: true }).click();
+  await page.getByRole("option", { name: /StickyN/ }).click();
   await expect(
     page.getByRole("heading", { name: "StickyN", exact: true }),
   ).toBeVisible();

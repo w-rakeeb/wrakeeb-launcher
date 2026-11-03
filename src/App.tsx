@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   Activity as ActivityIcon,
   ArrowDownToLine,
@@ -25,6 +25,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   WifiOff,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   catalog,
@@ -42,7 +43,9 @@ import { UpdateView, bytes } from "./UpdateView";
 
 import { APP_VERSION, useLauncherUpdates } from "./useLauncherUpdates";
 import brandLogo from "./assets/brand/wrakeeb.png";
-import { usePackages } from "./usePackages";
+import { usePackages, type PackageController } from "./usePackages";
+import type { PaletteAction } from "./CommandPalette";
+const CommandPalette = lazy(() => import("./CommandPalette"));
 import { PackageOperation } from "./DistributionPanel";
 import { ProjectDetails } from "./ProjectDetails";
 import { AppMenu } from "./AppMenu";
@@ -127,9 +130,18 @@ export function App() {
   }, [snapshot?.store.preferences.theme, snapshot?.store.preferences.accent, snapshot?.store.preferences.customAccent]);
   const [page, setPage] = useState<Page>(readPage);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => { const timer = setTimeout(() => setDebouncedQuery(query), 120); return () => clearTimeout(timer); }, [query]);
+  const [palette, setPalette] = useState(false);
+  const [context, setContext] = useState<{ id: string; x: number; y: number }>();
+  const contextRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!context) return; contextRef.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus(); const close = (e: Event) => { if (!contextRef.current?.contains(e.target as Node)) setContext(undefined); }; const escape = (e: KeyboardEvent) => { if (e.key === "Escape") setContext(undefined); }; document.addEventListener("pointerdown", close); window.addEventListener("keydown", escape); return () => { document.removeEventListener("pointerdown", close); window.removeEventListener("keydown", escape); }; }, [context]);
   const [filter, setFilter] = useState("All apps");
   const [sort, setSort] = useState("name");
   const [list, setList] = useState(false);
+  const [cardSize, setCardSize] = useState(260);
+  const initialPreferences = useRef(false);
+  useEffect(() => { if (!snapshot || initialPreferences.current) return; initialPreferences.current = true; setList(snapshot.store.preferences.libraryView === "list"); setFilter(snapshot.store.preferences.libraryFilter ?? "All apps"); setCardSize(snapshot.store.preferences.cardSize ?? 260); }, [snapshot]);
   const [dragId, setDragId] = useState<string>();
   const [dropId, setDropId] = useState<string>();
   const [uninstallId, setUninstallId] = useState<string>();
@@ -226,7 +238,7 @@ export function App() {
     const handler = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        searchRef.current?.focus();
+        setPalette(true);
       }
       if (event.key === "Escape" && !document.querySelector("dialog[open]")) {
         setDetailId(undefined);
@@ -360,12 +372,11 @@ export function App() {
   const detected = views.filter((app) => app.available && !app.linked);
   const detail = views.find((app) => app.id === detailId);
   const removal = linked.find((app) => app.linked?.id === removeId);
-  const collection =
-    page === "library"
-      ? views.filter((app) => app.linked || app.available)
+  const collection = page === "library"
+      ? views.filter(app => (filter === "Not installed" || app.linked || app.available) && (!snapshot?.store.preferences.hideLinked || !app.linked || app.installed))
       : views;
   const effectiveSort = snapshot?.store.preferences.librarySort ?? sort;
-  const displayed = filterApps(collection, query, filter, effectiveSort, snapshot?.store.preferences.customOrder);
+  const displayed = filterApps(collection, debouncedQuery, filter, effectiveSort, snapshot?.store.preferences.customOrder);
   async function reorder(source: string, target: string) {
     if (source === target || !snapshot || busy) return;
     const order = filterApps(views, "", "All apps", effectiveSort, snapshot.store.preferences.customOrder).map(a => a.id);
@@ -379,6 +390,17 @@ export function App() {
   }
   const isEmptyLibrary = page === "library" && collection.length === 0;
   const pageTitle = detail ? detail.name : headings[page][0];
+  const contextApp = views.find(a => a.id === context?.id);
+  function revealApp(app: ViewApp) { void perform("reveal", () => command(app.linked ? "reveal_application" : "reveal_catalog_app", { id: app.linked?.id ?? app.id })); }
+  function shortcut(app: ViewApp) { void perform("shortcut", async () => { const id = app.linked?.id ?? await command<string>("link_catalog_app", { id: app.id }); await command("create_application_shortcut", { id }); }, "Application shortcut created on your desktop."); }
+  const paletteActions: PaletteAction[] = [
+    ...views.map(app => ({ id: `app-${app.id}`, label: app.name, group: "Applications", detail: app.linked || app.available ? "Launch application" : "View project details", run: () => { if (app.linked || app.available) launch(app); else { setPage("discover"); setDetailId(app.id); } } })),
+    ...[...navigation, { id: "settings" as Page, label: "Settings" }].map(item => ({ id: `page-${item.id}`, label: `Open ${item.label}`, group: "Pages", run: () => navigate(item.id) })),
+    { id: "scan", label: "Scan installed apps", group: "Actions", disabled: !desktop || scanning, run: () => void scan() },
+    { id: "refresh", label: "Refresh library", group: "Actions", run: () => void perform("refresh", async () => {}, "Library refreshed.") },
+    { id: "theme", label: "Toggle light / dark theme", group: "Appearance", disabled: !desktop, run: () => void preferences({ theme: snapshot?.store.preferences.theme === "light" ? "discord" : "light" }) },
+  ];
+  const recentApps = filterApps(collection.filter(a => a.linked?.lastLaunched && !a.missing), "", "All apps", "recent").slice(0, 4);
 
   return (
     <div
@@ -423,7 +445,7 @@ export function App() {
           Edit: [
             {
               label: "Find an application",
-              action: () => searchRef.current?.focus(),
+              action: () => setPalette(true),
               shortcut: "Ctrl K",
             },
             {
@@ -592,6 +614,7 @@ export function App() {
                 <Action
                   app={detail}
                   busy={!!busy || packages.busy}
+                  operation={packages}
                   launch={launch}
                   link={link}
                 />
@@ -628,6 +651,7 @@ export function App() {
               openFolder={openDownloads}
               chooseDownload={chooseDownload}
               chooseInstall={chooseInstall}
+              createShortcut={() => shortcut(detail)}
             />
           ) : (
             <>
@@ -674,11 +698,12 @@ export function App() {
               </div>
               {page === "library" || page === "discover" ? (
                 <>
+                  {page === "library" && !query && filter === "All apps" && recentApps.length > 0 && <section className="recent-shelf" aria-label="Recently used"><div className="section-heading"><h2>Continue where you left off</h2><span>Recently launched</span></div><div>{recentApps.map(app => <button className="recent-app" key={app.id} onClick={() => launch(app)} disabled={!!busy}><AppGlyph app={app} size={30} /><span><strong>{app.name}</strong><small>{humanTime(app.linked!.lastLaunched!)}</small></span><ArrowRight size={16} /></button>)}</div></section>}
                   {!isEmptyLibrary && (
                     <div className="collection-toolbar">
                       <div className="filters" aria-label="Filter applications">
                         {(page === "library"
-                          ? ["All apps", "Favorites"]
+                          ? ["All apps", "Installed", "Linked", "Favorites", "Not installed"]
                           : [
                               "All apps",
                               "Utilities",
@@ -691,7 +716,7 @@ export function App() {
                           <button
                             key={item}
                             className={filter === item ? "selected" : ""}
-                            onClick={() => setFilter(item)}
+                            onClick={() => { setFilter(item); if (desktop && page === "library") void preferences({ libraryFilter: item }); }}
                             aria-pressed={filter === item}
                           >
                             {item}
@@ -702,6 +727,7 @@ export function App() {
                         ))}
                       </div>
                       <div className="view-tools">
+                        {!list && <label className="card-size-control"><span>Card size</span><input className="range range-xs" type="range" min="200" max="360" step="20" aria-label="Library card size" value={cardSize} onChange={event => setCardSize(Number(event.target.value))} onPointerUp={() => void preferences({ cardSize })} onKeyUp={() => void preferences({ cardSize })} /></label>}
                         <label className="sort-control">
                           <span className="sr-only">Sort applications</span>
                           <select
@@ -711,6 +737,8 @@ export function App() {
                           >
                             <option value="name">Name</option>
                             <option value="recent">Recently used</option>
+                            <option value="added">Recently added</option>
+                            <option value="size">Size</option>
                             <option value="custom">Custom order</option>
                           </select>
                           <ChevronDown size={12} aria-hidden="true" />
@@ -719,14 +747,14 @@ export function App() {
                           <button
                             aria-label="Grid view"
                             aria-pressed={!list}
-                            onClick={() => setList(false)}
+                            onClick={() => { setList(false); if (desktop) void preferences({ libraryView: "grid" }); }}
                           >
                             <Grid2X2 size={16} />
                           </button>
                           <button
                             aria-label="List view"
                             aria-pressed={list}
-                            onClick={() => setList(true)}
+                            onClick={() => { setList(true); if (desktop) void preferences({ libraryView: "list" }); }}
                           >
                             <LayoutList size={17} />
                           </button>
@@ -827,9 +855,13 @@ export function App() {
                     <div
                       className={list ? "apps-list" : "apps-grid"}
                       data-count={displayed.length}
+                      style={{ "--card-size": `${cardSize}px` } as CSSProperties}
+                      onKeyDown={event => { const card = (event.target as HTMLElement).closest<HTMLElement>(".app-item"); if (!card || event.altKey || (event.target as HTMLElement).closest("select,input")) return; const index = displayed.findIndex(a => a.id === card.dataset.appId); if (event.key === "Enter" && event.target === card) { event.preventDefault(); const app = displayed[index]; if (app.linked || app.available) launch(app); else setDetailId(app.id); } if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) { event.preventDefault(); const columns = list ? 1 : Math.max(1, getComputedStyle(event.currentTarget).gridTemplateColumns.split(" ").length); const next = index + (event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : event.key === "ArrowUp" ? -columns : columns); event.currentTarget.querySelectorAll<HTMLElement>(".app-item")[Math.max(0, Math.min(displayed.length - 1, next))]?.focus(); } }}
                     >
                       {displayed.map((app) => (
-                        <article className={`app-item ${dragId === app.id ? "is-dragging" : ""} ${dropId === app.id ? "is-drop-target" : ""}`} key={app.id}
+                        <article tabIndex={0} data-app-id={app.id} aria-label={app.name}
+                          onContextMenu={event => { event.preventDefault(); setContext({ id: app.id, x: event.clientX, y: event.clientY }); }}
+                          className={`app-item ${dragId === app.id ? "is-dragging" : ""} ${dropId === app.id ? "is-drop-target" : ""}`} key={app.id}
                           onDragOver={event => { if (dragId && dragId !== app.id) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropId(app.id); } }}
                           onDrop={event => { event.preventDefault(); if (dragId) void reorder(dragId, app.id); setDragId(undefined); setDropId(undefined); }}>
                           {page === "library" && <button className="reorder-handle" draggable={desktop && !busy} disabled={!desktop || !!busy}
@@ -853,6 +885,7 @@ export function App() {
                                 <AppGlyph app={app} size={25} />
                                 <span>{app.name}</span>
                               </button>
+                              <button className="card-options" aria-label={`Options for ${app.name}`} onClick={event => { const box = event.currentTarget.getBoundingClientRect(); setContext({ id: app.id, x: box.right, y: box.bottom }); }}><MoreHorizontal size={17} /></button>
                               {app.linked && (
                                 <button
                                   className="favorite-button"
@@ -880,6 +913,7 @@ export function App() {
                               )}
                             </div>
                             <p className="app-tagline">{app.tagline}</p>
+                            <div className="card-metadata"><span>{app.installed?.version ?? (app.linked ? "Linked" : app.available ? "Detected" : "Not installed")}</span><span>{app.installed?.installedBytes ? bytes(app.installed.installedBytes) : app.detected ? `${bytes(app.detected.executableBytes)} exe` : "Size unavailable"}</span><span className="last-used">{app.linked?.lastLaunched ? humanTime(app.linked.lastLaunched) : "Never launched"}</span></div>
                             <div className="app-bottom">
                               <span
                                 className={`app-status ${app.missing ? "missing" : ""}`}
@@ -898,6 +932,7 @@ export function App() {
                               </span>
                               <Action
                                 app={app}
+                                operation={packages}
                                 busy={!!busy || packages.busy}
                                 launch={launch}
                                 link={link}
@@ -1136,6 +1171,15 @@ export function App() {
           )}
         </main>
       </div>
+      {palette && <Suspense fallback={null}><CommandPalette actions={paletteActions} close={() => setPalette(false)} /></Suspense>}
+      {contextApp && context && <div ref={contextRef} className="app-context-menu menu" role="menu" aria-label={`${contextApp.name} actions`} style={{ left: Math.min(context.x, innerWidth - 248), top: Math.min(context.y, innerHeight - 320) }} onKeyDown={event => { if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) { event.preventDefault(); const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")); const i = items.indexOf(document.activeElement as HTMLButtonElement); items[event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : (i + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus(); } }}>
+        <strong>{contextApp.name}</strong>
+        {(contextApp.linked || contextApp.available) && <><button role="menuitem" disabled={!!busy || contextApp.missing} onClick={() => { launch(contextApp); setContext(undefined); }}>Launch</button><button role="menuitem" onClick={() => { revealApp(contextApp); setContext(undefined); }}>Open application folder</button><button role="menuitem" onClick={() => { shortcut(contextApp); setContext(undefined); }}>Create desktop shortcut</button></>}
+        {contextApp.linked && <button role="menuitem" onClick={() => { void perform("favorite", () => command("set_favorite", { id: contextApp.linked!.id, favorite: !contextApp.linked!.favorite })); setContext(undefined); }}>{contextApp.linked.favorite ? "Remove favorite" : "Add to favorites"}</button>}
+        <button role="menuitem" onClick={() => { setDetailId(contextApp.id); setContext(undefined); }}>Details</button>
+        {contextApp.linked && <button role="menuitem" onClick={() => { setRemoveId(contextApp.linked!.id); setContext(undefined); }}>Remove from library…</button>}
+        {contextApp.installed && <button role="menuitem" className="text-error" disabled={packages.busy} onClick={() => { setUninstallId(contextApp.id); setContext(undefined); }}>Uninstall application…</button>}
+      </div>}
       {notice && (
         <div
           className={`notification ${notice.error ? "is-error" : ""}`}
@@ -1265,16 +1309,21 @@ export function App() {
 }
 
 function Action({
+  operation,
   app,
   busy,
   launch,
   link,
 }: {
   app: ViewApp;
+  operation?: PackageController;
   busy: boolean;
   launch: (app: ViewApp) => void;
   link: (app: ViewApp) => void;
 }) {
+  const transfer = operation?.status.projectId === app.id ? operation.status : undefined;
+  if (transfer && ["downloading", "verifying", "installing"].includes(transfer.stage)) return <button className="btn btn-sm transfer-button" disabled><span>{transfer.stage === "downloading" ? `Downloading ${transfer.totalBytes ? Math.floor(transfer.downloadedBytes / transfer.totalBytes * 100) : 0}%` : transfer.stage === "verifying" ? "Verifying…" : "Installing…"}</span><progress className="progress progress-primary" value={transfer.downloadedBytes} max={transfer.totalBytes || 1} aria-label="Download progress" /></button>;
+  if (transfer?.stage === "downloaded" && transfer.asset?.installable) return <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => void operation?.install()}>Install package</button>;
   return app.linked || app.available ? (
     <button
       className="btn btn-sm launch-button"

@@ -27,6 +27,7 @@ export function ProjectDetails({
   favorite,
   remove,
   uninstall,
+  createShortcut,
   openRepository,
   openFolder,
   chooseDownload,
@@ -44,6 +45,7 @@ export function ProjectDetails({
   favorite: () => void;
   remove: () => void;
   uninstall: () => void;
+  createShortcut: () => void;
   openRepository: () => void;
   openFolder: () => void;
   chooseDownload: () => void;
@@ -203,6 +205,7 @@ export function ProjectDetails({
                 Open GitHub repository
               </button>
             </li>
+            {path && <li><button onClick={createShortcut}>Create desktop shortcut</button></li>}
             {path && (
               <li>
                 <button onClick={reveal}>Open application folder</button>
@@ -268,6 +271,7 @@ export function ProjectDetails({
                     (path ? "External installation" : "Not installed")}
                 </dd>
               </div>
+              <div><dt>Last launched</dt><dd>{app.linked?.lastLaunched ? new Date(app.linked.lastLaunched * 1000).toLocaleString() : "Never launched"}</dd></div>
               <div>
                 <dt>License</dt>
                 <dd>{release?.license ?? "See repository"}</dd>

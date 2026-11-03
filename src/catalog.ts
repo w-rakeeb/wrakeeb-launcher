@@ -317,14 +317,18 @@ export function filterApps(
             .toLocaleLowerCase()
             .includes(term)) &&
         (filter === "All apps" ||
-          (filter === "Favorites"
-            ? app.linked?.favorite
+          (filter === "Favorites" ? app.linked?.favorite
+            : filter === "Installed" ? (app.linked || app.available) && !app.missing
+            : filter === "Linked" ? app.linked && !app.installed
+            : filter === "Not installed" ? !app.linked && !app.available
             : app.category === filter)),
     )
     .sort((a, b) =>
       sort === "custom"
         ? (order.indexOf(a.id) < 0 ? order.length : order.indexOf(a.id)) -
           (order.indexOf(b.id) < 0 ? order.length : order.indexOf(b.id))
+        : sort === "added" ? (b.linked?.addedAt ?? 0) - (a.linked?.addedAt ?? 0) || a.name.localeCompare(b.name)
+        : sort === "size" ? (b.installed?.installedBytes ?? b.detected?.executableBytes ?? 0) - (a.installed?.installedBytes ?? a.detected?.executableBytes ?? 0) || a.name.localeCompare(b.name)
         : sort === "recent"
         ? (b.linked?.lastLaunched ?? b.linked?.addedAt ?? 0) -
             (a.linked?.lastLaunched ?? a.linked?.addedAt ?? 0) ||

@@ -120,3 +120,20 @@ pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     }
     Ok(())
 }
+
+#[tauri::command]
+pub async fn create_application_shortcut(id: String, app: tauri::AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let library = app.state::<crate::Library>();
+        let linked = library.store.lock().map_err(|_| "Library is busy")?.apps.iter().find(|a| a.id == id).cloned().ok_or("Link this application first")?;
+        let target = crate::launchable(std::path::Path::new(&linked.path))?;
+        let name: String = linked.name.chars().filter(|c| !c.is_control() && !r#"<>:\"/\|?*"#.contains(*c)).take(100).collect();
+        if name.trim().is_empty() { return Err("The application has no valid shortcut name.".into()); }
+        let mut process = std::process::Command::new(crate::windows_tool("WindowsPowerShell/v1.0/powershell.exe")?);
+        process.args(["-NoProfile", "-NonInteractive", "-Command", "$ErrorActionPreference='Stop'; $p=Join-Path ([Environment]::GetFolderPath('Desktop')) ($env:WRAKEEB_SHORTCUT_NAME+'.lnk'); if(Test-Path -LiteralPath $p){throw 'A shortcut with this name already exists'}; $s=New-Object -ComObject WScript.Shell; $l=$s.CreateShortcut($p); $l.TargetPath=$env:WRAKEEB_SHORTCUT_TARGET; $l.WorkingDirectory=[IO.Path]::GetDirectoryName($env:WRAKEEB_SHORTCUT_TARGET); $l.IconLocation=$env:WRAKEEB_SHORTCUT_TARGET+',0'; $l.Save()"])
+            .env("WRAKEEB_SHORTCUT_TARGET", target).env("WRAKEEB_SHORTCUT_NAME", name);
+        #[cfg(windows)] { use std::os::windows::process::CommandExt; process.creation_flags(0x08000000); }
+        if !process.status().map_err(|e| e.to_string())?.success() { return Err("Windows could not create the shortcut, or that name already exists.".into()); }
+        Ok(())
+    }).await.map_err(|e| e.to_string())?
+}
