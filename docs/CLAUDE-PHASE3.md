@@ -1,0 +1,3 @@
+Phase 3 supports one active native transfer, cancel, measured transfer rate/ETA, persistent latest-transfer feedback, and a history built from real installation receipts. Activity uses recorded events grouped by day with filters. Discover has a static first-party StickyN feature. Fresh libraries have optional three-step setup.
+
+No queue, pause/resume, app update availability, Update all, repair, speed limit or concurrency controls are displayed because this backend does not implement them. The Updates workspace explicitly identifies its launcher-only scope. No data is invented to populate production screens.

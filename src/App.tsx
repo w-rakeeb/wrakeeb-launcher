@@ -46,6 +46,8 @@ import brandLogo from "./assets/brand/wrakeeb.png";
 import { usePackages, type PackageController } from "./usePackages";
 import type { PaletteAction } from "./CommandPalette";
 const CommandPalette = lazy(() => import("./CommandPalette"));
+const ActivityTimeline = lazy(() => import("./ActivityTimeline"));
+import { DownloadHistory } from "./DownloadInsights";
 import { PackageOperation } from "./DistributionPanel";
 import { ProjectDetails } from "./ProjectDetails";
 import { AppMenu } from "./AppMenu";
@@ -698,6 +700,7 @@ export function App() {
               </div>
               {page === "library" || page === "discover" ? (
                 <>
+                  {page === "discover" && !query && filter === "All apps" && <section className="discover-feature"><div><span>From the Wrakeeb collection</span><h2>A little more room for your ideas.</h2><p>StickyN keeps notes close to your work. Explore the app, see its workspace, and choose a release.</p><button className="btn btn-primary" onClick={() => setDetailId("stickyn")}>Explore StickyN <ArrowRight size={15} /></button></div><button aria-label="Preview StickyN" onClick={() => setDetailId("stickyn")}><img src={catalog.find(app => app.id === "stickyn")?.images?.[0]?.src} alt="StickyN desktop workspace" loading="lazy" /></button></section>}
                   {page === "library" && !query && filter === "All apps" && recentApps.length > 0 && <section className="recent-shelf" aria-label="Recently used"><div className="section-heading"><h2>Continue where you left off</h2><span>Recently launched</span></div><div>{recentApps.map(app => <button className="recent-app" key={app.id} onClick={() => launch(app)} disabled={!!busy}><AppGlyph app={app} size={30} /><span><strong>{app.name}</strong><small>{humanTime(app.linked!.lastLaunched!)}</small></span><ArrowRight size={16} /></button>)}</div></section>}
                   {!isEmptyLibrary && (
                     <div className="collection-toolbar">
@@ -789,6 +792,7 @@ export function App() {
                           </button>
                         </div>
                         <div className="first-run-guide">
+                          {!snapshot.store.preferences.onboardingComplete && <div className="quick-setup"><h3>Make yourself at home</h3><ol><li><button className="text-button" onClick={chooseInstall}>Choose an application folder</button></li><li><label>Choose your look<select className="select select-sm" aria-label="Setup theme" disabled={!desktop || !!busy} value={snapshot.store.preferences.theme ?? "discord"} onChange={e => void preferences({ theme: e.target.value as Preferences["theme"] })}><option value="discord">Wrakeeb Dark</option><option value="light">Light</option><option value="midnight">Midnight</option><option value="obsidian">AMOLED</option></select></label></li><li><button className="text-button" disabled={scanning || !desktop} onClick={() => void scan()}>Scan for installed apps</button></li></ol><button className="btn btn-sm btn-ghost" disabled={!desktop || !!busy} onClick={() => void preferences({ onboardingComplete: true })}>Done / skip setup</button></div>}
                           <h3>Install your first package</h3>
                           <ol>
                             <li>Open Discover and select Launcher Demo.</li>
@@ -1001,6 +1005,7 @@ export function App() {
                         : undefined
                     }
                   />
+                  <DownloadHistory snapshot={snapshot} />
                   <section className="downloads-empty">
                     <div className="empty-symbol">
                       <ArrowDownToLine size={29} strokeWidth={1.4} />
@@ -1010,7 +1015,7 @@ export function App() {
                         ? "Downloading launcher update"
                         : updates.status.downloadPath
                           ? "Verified package ready"
-                          : "No downloads yet"}
+                          : packages.status.stage ? "Launcher update packages" : "No downloads yet"}
                     </h2>
                     {updates.status.stage === "downloading" ? (
                       <>
@@ -1092,37 +1097,7 @@ export function App() {
                   }
                 />
               ) : page === "activity" ? (
-                <section className="activity-panel">
-                  {snapshot.store.activity.length ? (
-                    snapshot.store.activity.map((item) => (
-                      <div className="activity-row" key={item.id}>
-                        <span className="activity-dot" />
-                        <div>
-                          <strong>{item.name}</strong>
-                          <span>{item.action}</span>
-                        </div>
-                        <time dateTime={new Date(item.at * 1000).toISOString()}>
-                          {humanTime(item.at)}
-                        </time>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="no-results">
-                      <ActivityIcon size={26} />
-                      <h2>A fresh start</h2>
-                      <p>
-                        App additions, launch requests and removals will appear
-                        here.
-                      </p>
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => navigate("library")}
-                      >
-                        Go to library
-                      </button>
-                    </div>
-                  )}
-                </section>
+                <Suspense fallback={<div className="loading-state" role="status">Opening activity…</div>}><ActivityTimeline activity={snapshot.store.activity} openLibrary={() => navigate("library")} /></Suspense>
               ) : (
                 <SettingsView
                   snapshot={snapshot}

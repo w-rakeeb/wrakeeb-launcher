@@ -16,6 +16,7 @@ import { command, desktop } from "./bridge";
 import type { ViewApp } from "./catalog";
 import type { ProjectRelease, PackageController } from "./usePackages";
 import { bytes } from "./UpdateView";
+import { TransferInsights } from "./DownloadInsights";
 
 export function FileIcon({ name }: { name: string }) {
   const ext = name.split(".").pop()?.toLowerCase();
@@ -207,6 +208,7 @@ export function PackageOperation({
           <p className="file-path">{status.path}</p>
         </details>
       )}
+      <TransferInsights status={status} />
       <StorageChoices
         {...{
           downloadDirectory,

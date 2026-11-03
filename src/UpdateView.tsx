@@ -44,6 +44,7 @@ export function UpdateView({
     : false;
   return (
     <div className="updates-layout">
+      <p className="update-scope">This workspace updates Wrakeeb Launcher. Linked applications use their own updaters; per-app Update all and repair are not available in this version.</p>
       <section className="update-main-panel">
         <div className={`update-result result-${status.stage}`}>
           <div className="update-result-icon">
